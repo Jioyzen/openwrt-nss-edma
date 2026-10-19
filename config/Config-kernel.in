@@ -376,6 +376,15 @@ config KERNEL_PSI
 
 	  Say N if unsure.
 
+config KERNEL_KALLSYMS_UNCOMPRESSED
+	bool "Keep kernel symbol names uncompressed"
+	depends on KERNEL_KALLSYMS
+	default y
+	help
+	  Preserves the traditional OpenWrt choice for smaller compressed images.
+	  Disable to use the kernel's token-compressed names and reduce resident
+	  RAM while retaining symbolized backtraces and module diagnostics.
+
 config KERNEL_KALLSYMS
 	bool "Compile the kernel with symbol table information"
 	default y if !SMALL_FLASH

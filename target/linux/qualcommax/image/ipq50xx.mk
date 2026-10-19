@@ -612,3 +612,40 @@ define Device/zyxel_scr50axe
 		ipq-wifi-zyxel_scr50axe
 endef
 TARGET_DEVICES += zyxel_scr50axe
+
+define Device/lingyan_lyw-30m-ram
+ $(call Device/FitImageLzma)
+ DEVICE_VENDOR := Lingyan
+ DEVICE_MODEL := LYW-30M (6.18 NSS RAM validation)
+ SOC := ipq5018
+ DEVICE_DTS := ipq5018-lyw-30m
+ DEVICE_DTS_CONFIG := config@mp03.3
+ KERNEL_LOADADDR := 0x41000000
+ BLOCKSIZE := 128k
+ PAGESIZE := 2048
+ NAND_SIZE := 128m
+ SUPPORTED_DEVICES := lingyan,lyw-30m
+ IMAGES :=
+ DEVICE_PACKAGES := kmod-ath11k-ahb hostapd-basic-mbedtls ath11k-firmware-ipq5018-qcn6122 -wpad-basic-mbedtls -wpad-openssl -uboot-envtools -automount -cpufreq -kmod-usb3 -kmod-usb-dwc3 -kmod-usb-dwc3-qcom
+endef
+TARGET_DEVICES += lingyan_lyw-30m-ram
+
+define Device/lingyan_lyw-30m-single
+ $(call Device/FitImageLzma)
+ $(call Device/UbiFit)
+ DEVICE_VENDOR := Lingyan
+ DEVICE_MODEL := LYW-30M
+ SOC := ipq5018
+ DEVICE_DTS := ipq5018-lyw-30m-single
+ DEVICE_DTS_CONFIG := config@mp03.3
+ KERNEL_LOADADDR := 0x41000000
+ BLOCKSIZE := 128k
+ PAGESIZE := 2048
+ IMAGE_SIZE := 121856k
+ NAND_SIZE := 128m
+ SUPPORTED_DEVICES := lingyan,lyw-30m
+ DEVICE_COMPAT_VERSION := 2.0
+ DEVICE_COMPAT_MESSAGE := Requires the LYW-30M single-system 119MiB UBI layout and dedicated U-Boot boot command.
+ DEVICE_PACKAGES := nand-utils mtd ubi-utils dumpimage kmod-ath11k-ahb hostapd-basic-mbedtls ath11k-firmware-ipq5018-qcn6122 -wpad-basic-mbedtls -wpad-openssl -uboot-envtools -automount -cpufreq -kmod-usb3 -kmod-usb-dwc3 -kmod-usb-dwc3-qcom
+endef
+TARGET_DEVICES += lingyan_lyw-30m-single

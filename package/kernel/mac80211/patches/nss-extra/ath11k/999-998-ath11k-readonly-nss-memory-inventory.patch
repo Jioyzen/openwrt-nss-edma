@@ -1,0 +1,131 @@
+From: LYW-30M port <local@localhost>
+Subject: [PATCH] ath11k: expose read-only NSS/CE/RX memory inventories
+
+No allocation policy changes. Do not report skb truesize as physical pages.
+
+--- a/drivers/net/wireless/ath/ath11k/debugfs.c
++++ b/drivers/net/wireless/ath/ath11k/debugfs.c
+@@ -6,6 +6,7 @@
+ 
+ #include <linux/export.h>
+ #include <linux/vmalloc.h>
++#include <linux/seq_file.h>
+ 
+ #include "debugfs.h"
+ 
+@@ -756,6 +757,105 @@
+ 	.llseek = default_llseek,
+ };
+ 
++/* Read-only inventories. Counts do not equate skb truesize with unique pages.
++ * core_lock excludes datapath teardown; IDR locks protect the skb walk.
++ */
++static void ath11k_debugfs_rx_inventory(struct seq_file *s, const char *name,
++                                      struct ath11k_base *ab,
++                                      struct dp_rxdma_ring *ring)
++{
++	struct sk_buff *skb;
++	unsigned int n = 0, frag = 0;
++	u64 truesize = 0;
++	int id;
++
++	if (!ring->bufs_max) {
++		seq_printf(s, "%s disabled\n", name);
++		return;
++	}
++
++	spin_lock_bh(&ring->idr_lock);
++	idr_for_each_entry(&ring->bufs_idr, skb, id) {
++		n++;
++		frag += skb->head_frag;
++		truesize += skb->truesize;
++	}
++	spin_unlock_bh(&ring->idr_lock);
++
++	seq_printf(s, "%s entries=%u max=%u skbs=%u head_frag=%u truesize=%llu\n",
++		   name, ab->hal.srng_list[ring->refill_buf_ring.ring_id].num_entries,
++		   ring->bufs_max, n, frag, truesize);
++}
++
++static int ath11k_debugfs_memory_inventory_show(struct seq_file *s, void *unused)
++{
++	struct ath11k_base *ab = s->private;
++	struct ath11k *ar;
++	struct hal_srng *srng;
++	struct ath11k_ce_pipe *pipe;
++	u64 ring_bytes = 0, nss_desc_bytes = 0;
++	char name[40];
++	int i, j;
++
++	mutex_lock(&ab->core_lock);
++	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ab->dev_flags) ||
++	    test_bit(ATH11K_FLAG_UNREGISTERING, &ab->dev_flags)) {
++		mutex_unlock(&ab->core_lock);
++		return -ENETDOWN;
++	}
++
++	seq_printf(s, "host_tx_allocated=%u fw_crashes=%u\n",
++		   ab->dp.host_tx_allocated, ab->stats.fw_crash_counter);
++#ifdef CPTCFG_ATH11K_NSS_SUPPORT
++	for (i = 0; i < ATH11K_NSS_MAX_NUMBER_OF_PAGE; i++)
++		if (ab->nss.tx_desc_vaddr[i])
++			nss_desc_bytes += ab->nss.tx_desc_size[i];
++	seq_printf(s, "nss_enabled=%u tx_desc_limit=%u nss_tx_desc_coherent_bytes=%llu\n",
++		   ab->nss.enabled, ATH11K_NSS_256M_TX_DESC_LIMIT,
++		   nss_desc_bytes);
++#endif
++
++	for (i = 0; i < HAL_SRNG_RING_ID_MAX; i++) {
++		srng = &ab->hal.srng_list[i];
++		if (!srng->initialized)
++			continue;
++		ring_bytes += (u64)srng->num_entries * srng->entry_size * 4;
++		seq_printf(s, "srng%d entries=%u entry_bytes=%u\n", i,
++			   srng->num_entries, srng->entry_size * 4);
++	}
++	seq_printf(s, "srng_logical_bytes=%llu (excludes alignment and software arrays)\n",
++		   ring_bytes);
++
++	for (i = 0; i < ab->hw_params.ce_count; i++) {
++		pipe = &ab->ce.ce_pipe[i];
++		if (!pipe->dest_ring)
++			continue;
++		seq_printf(s, "ce%d dst=%u status=%u buffer_bytes=%u refill_needed=%u\n", i,
++			   pipe->dest_ring->nentries,
++			   pipe->status_ring ? pipe->status_ring->nentries : 0,
++			   pipe->buf_sz, pipe->rx_buf_needed);
++	}
++
++	for (i = 0; i < ab->num_radios; i++) {
++		ar = ab->pdevs[i].ar;
++		if (!ar || ar->state != ATH11K_STATE_ON)
++			continue;
++		snprintf(name, sizeof(name), "radio%d_rx_data", i);
++		ath11k_debugfs_rx_inventory(s, name, ab, &ar->dp.rx_refill_buf_ring);
++		snprintf(name, sizeof(name), "radio%d_rx_monitor", i);
++		ath11k_debugfs_rx_inventory(s, name, ab, &ar->dp.rxdma_mon_buf_ring);
++		for (j = 0; j < ab->hw_params.num_rxdma_per_pdev; j++) {
++			snprintf(name, sizeof(name), "radio%d_mon_status%d", i, j);
++			ath11k_debugfs_rx_inventory(s, name, ab,
++					   &ar->dp.rx_mon_status_refill_ring[j]);
++		}
++	}
++	mutex_unlock(&ab->core_lock);
++	return 0;
++}
++
++DEFINE_SHOW_ATTRIBUTE(ath11k_debugfs_memory_inventory);
++
+ static ssize_t ath11k_write_fw_dbglog(struct file *file,
+ 				      const char __user *user_buf,
+ 				      size_t count, loff_t *ppos)
+@@ -959,6 +1059,9 @@
+ 
+ 	debugfs_create_file("soc_dp_stats", 0400, ab->debugfs_soc, ab,
+ 			    &fops_soc_dp_stats);
++
++	debugfs_create_file("memory_inventory", 0400, ab->debugfs_soc, ab,
++			    &ath11k_debugfs_memory_inventory_fops);
+ 
+ 	if (ab->hw_params.sram_dump.start != 0)
+ 		debugfs_create_file("sram", 0400, ab->debugfs_soc, ab,

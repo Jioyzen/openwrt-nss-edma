@@ -1,10 +1,11 @@
+. /lib/upgrade/lyw-30m.sh
 . /lib/functions/bootconfig.sh
 
 PART_NAME=firmware
 REQUIRE_IMAGE_METADATA=1
 
-RAMFS_COPY_BIN='cmp dumpimage fw_printenv fw_setenv head seq'
-RAMFS_COPY_DATA='/etc/fw_env.config /var/lock/fw_printenv.lock'
+RAMFS_COPY_BIN='sha256sum cut hexdump cmp dumpimage fw_printenv fw_setenv head seq'
+RAMFS_COPY_DATA='/etc/lyw-release /lib/upgrade/lyw-30m.sh /etc/fw_env.config /var/lock/fw_printenv.lock'
 
 fritzbox_remove_oem_ubi_volumes() {
 	remove_oem_ubi_volume avm_filesys_0
@@ -354,6 +355,7 @@ linksys_mx_pre_upgrade() {
 
 platform_check_image() {
 	case "$(board_name)" in
+	lingyan,lyw-30m) lyw_check_image "$1"; return $? ;;
 	cudy,p5)
 		nand_do_platform_check "$(board_name)" "$1"
 		;;
@@ -388,6 +390,7 @@ platform_pre_upgrade() {
 
 platform_do_upgrade() {
 	case "$(board_name)" in
+	lingyan,lyw-30m) lyw_nand_upgrade "$1" ;;
 	avm,fritzbox-4050)
 		sync
 		CI_KERNPART="fit0"

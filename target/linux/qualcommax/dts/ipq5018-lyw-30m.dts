@@ -1,0 +1,184 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+// LYW-30M AX3000_Q06_V2.0_0223: 6.18 RAM validation: stmmac/DSA, native QPIC ECC, every NAND partition read-only.
+/dts-v1/;
+#include "ipq5018.dtsi"
+#include "ipq5018-ess.dtsi"
+#include "ipq5018-nss.dtsi"
+#include "ipq5018-qcn6122.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+/ {
+ model = "Lingyan LYW-30M";
+ compatible = "lingyan,lyw-30m", "qcom,ipq5018";
+ // The board is known to have 256MiB; do not rely on vendor memory fixups.
+ memory@40000000 { reg = <0 0x40000000 0 0x10000000>; };
+ reserved-memory {
+  q6_region_qcn6122_1: q6-region-qcn6122-1@4d200000 {
+   reg = <0 0x4d200000 0 0x00d00000>; no-map;
+  };
+  m3_dump_qcn6122_1: m3-dump-qcn6122-1@4df00000 {
+   reg = <0 0x4df00000 0 0x00100000>; no-map;
+  };
+ };
+ aliases { serial0 = &blsp1_uart1; label-mac-device = <&gmac1>; };
+ chosen {
+  stdout-path = "serial0:115200n8";
+  bootargs-append = " console=ttyMSM0,115200n8 loglevel=6 swiotlb=1 coherent_pool=512K";
+ };
+ keys {
+  compatible = "gpio-keys";
+  pinctrl-0 = <&keys_pins>;
+  pinctrl-names = "default";
+  reset { label = "reset"; gpios = <&tlmm 27 GPIO_ACTIVE_LOW>; linux,code = <KEY_RESTART>; debounce-interval = <60>; };
+  wps { label = "wps"; gpios = <&tlmm 38 GPIO_ACTIVE_LOW>; linux,code = <KEY_WPS_BUTTON>; debounce-interval = <60>; };
+ };
+};
+// 8MiB remains experimental: delayed recovery panic needs a 16MiB control.
+// Keep all original reserved ranges while isolating the failure.
+&nss_region { reg = <0 0x40000000 0 0x01000000>; };
+// This board keeps its original QSEE/secure monitor; retain its full OEM region.
+&tz_region { reg = <0 0x4ac00000 0 0x00400000>; };
+&sleep_clk { clock-frequency = <32000>; };
+&xo_board_clk { clock-div = <4>; clock-mult = <1>; };
+&blsp1_uart1 {
+ status = "okay";
+ pinctrl-0 = <&serial_0_pins>;
+ pinctrl-names = "default";
+};
+&prng { status = "okay"; };
+&qfprom { status = "okay"; };
+&qpic_bam { status = "okay"; };
+&qpic_nand {
+ pinctrl-0 = <&qpic_pins>;
+ pinctrl-names = "default";
+ status = "okay";
+ // Retain the previously validated 100MHz QPIC macro rate.
+ assigned-clocks = <&gcc GCC_QPIC_IO_MACRO_CLK>;
+ assigned-clock-rates = <100000000>;
+ flash@0 {
+  compatible = "spi-nand";
+  reg = <0>;
+  spi-max-frequency = <50000000>;
+  nand-ecc-engine = <&qpic_nand>;
+  nand-ecc-strength = <4>;
+  nand-ecc-step-size = <512>;
+  nand-bus-width = <8>;
+  partitions {
+   compatible = "fixed-partitions";
+   #address-cells = <1>;
+   #size-cells = <1>;
+   partition@0 { label = "0:SBL1"; reg = <0x0 0x80000>; read-only; };
+   partition@80000 { label = "0:MIBIB"; reg = <0x80000 0x80000>; read-only; };
+   partition@100000 { label = "0:BOOTCONFIG"; reg = <0x100000 0x40000>; read-only; };
+   partition@140000 { label = "0:BOOTCONFIG1"; reg = <0x140000 0x40000>; read-only; };
+   partition@180000 { label = "0:QSEE"; reg = <0x180000 0x100000>; read-only; };
+   partition@280000 { label = "0:QSEE_1"; reg = <0x280000 0x100000>; read-only; };
+   partition@380000 { label = "0:DEVCFG"; reg = <0x380000 0x40000>; read-only; };
+   partition@3c0000 { label = "0:DEVCFG_1"; reg = <0x3c0000 0x40000>; read-only; };
+   partition@400000 { label = "0:CDT"; reg = <0x400000 0x40000>; read-only; };
+   partition@440000 { label = "0:CDT_1"; reg = <0x440000 0x40000>; read-only; };
+   partition@480000 { label = "0:APPSBLENV"; reg = <0x480000 0x80000>; read-only; };
+   partition@500000 { label = "0:APPSBL"; reg = <0x500000 0x140000>; read-only; };
+   partition@640000 { label = "0:APPSBL_1"; reg = <0x640000 0x140000>; read-only; };
+   partition@780000 { label = "0:ART"; reg = <0x780000 0x100000>; read-only;
+    nvmem-layout {
+     compatible = "fixed-layout"; #address-cells = <1>; #size-cells = <1>;
+     ge_mac: mac-address@0 { compatible = "mac-base"; reg = <0 6>; #nvmem-cell-cells = <1>; };
+     switch_mac: mac-address@6 { compatible = "mac-base"; reg = <6 6>; #nvmem-cell-cells = <1>; };
+    };
+ };
+   partition@880000 { label = "0:TRAINING"; reg = <0x880000 0x80000>; read-only; };
+   // All NAND after the boot chain and calibration belongs to one OpenWrt UBI.
+   rootfs_part: partition@900000 { label = "rootfs"; reg = <0x900000 0x7700000>; read-only; };
+  };
+ };
+};
+&gmac0 {
+ status = "okay";
+ label = "lan3";
+ nvmem-cells = <&ge_mac 0>; nvmem-cell-names = "mac-address";
+};
+&gmac1 {
+ status = "okay";
+ phy-mode = "sgmii";
+ nvmem-cells = <&switch_mac 0>; nvmem-cell-names = "mac-address";
+ fixed-link { speed = <1000>; full-duplex; };
+};
+&uniphy0 {
+ status = "okay";
+ assigned-clocks = <&uniphy0 UNIPHY_CLK_REF>;
+ assigned-clock-rates = <UNIPHY_REFCLK_25MHZ>;
+};
+&mdio0 { status = "okay"; };
+&mdio1 {
+ status = "okay";
+ pinctrl-0 = <&mdio1_pins>, <&switch_reset_pins>;
+ pinctrl-names = "default";
+ reset-gpios = <&tlmm 39 GPIO_ACTIVE_LOW>;
+ // Validated QCA8337 reset timing.
+ reset-delay-us = <10000>;
+ reset-post-delay-us = <10000>;
+ qca8337_0: ethernet-phy@0 { reg = <0>; };
+ qca8337_1: ethernet-phy@1 { reg = <1>; };
+ qca8337_2: ethernet-phy@2 { reg = <2>; };
+ qca8337_3: ethernet-phy@3 { reg = <3>; };
+ ethernet-switch@18 {
+  compatible = "qca,qca8337";
+  reg = <0x18>;
+  #address-cells = <1>; #size-cells = <0>;
+  ports {
+   #address-cells = <1>; #size-cells = <0>;
+   // External mapping: p2=WAN, p3=LAN1, p4=LAN2; dp1/ge=LAN3; p1 is unexposed.
+   port@1 { reg = <1>; label = "unused"; phy-handle = <&qca8337_0>; status = "disabled"; };
+   port@2 { reg = <2>; label = "wan"; phy-handle = <&qca8337_1>; };
+   port@3 { reg = <3>; label = "lan1"; phy-handle = <&qca8337_2>; };
+   port@4 { reg = <4>; label = "lan2"; phy-handle = <&qca8337_3>; };
+   port@6 {
+    reg = <6>; phy-mode = "sgmii"; ethernet = <&gmac1>; qca,sgmii-enable-pll;
+    fixed-link { speed = <1000>; full-duplex; };
+   };
+  };
+ };
+};
+&tlmm {
+ keys_pins: keys-state { pins = "gpio27", "gpio38"; function = "gpio"; drive-strength = <8>; bias-pull-up; };
+ serial_0_pins: uart0-state { pins = "gpio20", "gpio21"; function = "blsp0_uart0"; bias-disable; };
+ mdio1_pins: mdio-state {
+  mdc-pins { pins = "gpio36"; function = "mdc"; drive-strength = <8>; bias-pull-up; };
+  mdio-pins { pins = "gpio37"; function = "mdio"; drive-strength = <8>; bias-pull-up; };
+ };
+ switch_reset_pins: switch-reset-state { pins = "gpio39"; function = "gpio"; drive-strength = <8>; bias-pull-down; };
+ qpic_pins: qpic-state {
+  clock-pins { pins = "gpio9"; function = "qspi_clk"; drive-strength = <8>; bias-disable; };
+  cs-pins { pins = "gpio8"; function = "qspi_cs"; drive-strength = <8>; bias-disable; };
+  data-pins { pins = "gpio4", "gpio5", "gpio6", "gpio7"; function = "qspi_data"; drive-strength = <8>; bias-disable; };
+ };
+};
+// OEM uses GPIO18 for the integrated QCN6102 endpoint reset; never copy PZ-L8 GPIO27.
+&q6v5_wcss {
+ status = "okay";
+ boot-args = <0x2 4 2 18 0 0>;
+};
+&wifi {
+ status = "okay";
+ qcom,rproc = <&q6v5_wcss>;
+ qcom,ath11k-calibration-variant = "LINGYAN-LYW-30M";
+ qcom,ath11k-fw-memory-mode = <2>;
+ qcom,bdf-addr = <0x4c400000>;
+ ieee80211-freq-limit = <2400000 2483000>;
+};
+&wifi1 {
+ memory-region = <&q6_region_qcn6122_1>, <&q6_region_ipq5018>, <&m3_dump_qcn6122_1>;
+ memory-region-names = "q6-region", "m3-region", "m3-dump";
+ status = "okay";
+ qcom,rproc = <&q6v5_wcss>;
+ qcom,ath11k-calibration-variant = "LINGYAN-LYW-30M";
+ qcom,ath11k-fw-memory-mode = <2>;
+ qcom,bdf-addr = <0x4d100000>;
+ qcom,m3-dump-addr = <0x4df00000>;
+ ieee80211-freq-limit = <5150000 5895000>;
+};
+
+// Match the WCSS SMP2P restart handshake used by the OEM firmware.
+&wcss_smp2p_out { qcom,smp2p-feature-ssr-ack; };

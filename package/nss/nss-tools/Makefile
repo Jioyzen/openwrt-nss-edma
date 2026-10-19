@@ -51,12 +51,19 @@ define Package/nss-tools-dwmac
   # there.
   DEPENDS:=@(TARGET_qualcommax_ipq50xx) \
 	+TARGET_qualcommax_ipq50xx:kmod-qca-dwmac-nss +kmod-qca-nss-drv \
-	+kmod-qca-nss-ecm +kmod-qca-nss-drv-vlan-mgr \
+	+kmod-qca-nss-ecm +kmod-qca-nss-drv-vlan-mgr +kmod-qca-nss-drv-pppoe \
 	+TARGET_qualcommax_ipq50xx:kmod-qca8337-nss \
-	+TARGET_qualcommax_ipq50xx:kmod-rtl8367s-nss \
+	+NSS_TOOLS_DWMAC_RTL8367S:kmod-rtl8367s-nss \
 	+TARGET_qualcommax_ipq50xx:kmod-qca-dsa-nss +ip-full
   CONFLICTS:=nss-tools
   PKGARCH:=all
+endef
+
+define Package/nss-tools-dwmac/config
+  config NSS_TOOLS_DWMAC_RTL8367S
+    bool "Include the optional RTL8367S legacy switch module"
+    depends on PACKAGE_nss-tools-dwmac
+    default y
 endef
 
 define Package/nss-tools-dwmac/description

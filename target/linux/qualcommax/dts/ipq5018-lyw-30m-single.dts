@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+// Authorized single-system NAND validation; same hardware and memory profile.
+#include "ipq5018-lyw-30m.dts"
+
+/ {
+ chosen {
+  // The existing original U-Boot supplies ubi.mtd=rootfs.
+  bootargs-append = " console=ttyMSM0,115200n8 loglevel=4 root=/dev/ubiblock0_1 rootfstype=squashfs ro rootwait swiotlb=1 coherent_pool=512K";
+  lingyan,nand-writable;
+ };
+};
+
+&rootfs_part {
+ /delete-property/ read-only;
+};

@@ -8,7 +8,7 @@ symbols when 256M is selected (ath.mk), and this patch shrinks, under
 CPTCFG_ATH11K_MEM_PROFILE_256M only, the four rings the 512M profile
 leaves at their 1G sizes: DP_RXDMA_BUF_RING_SIZE 4096 -> 512,
 DP_RXDMA_ERR_DST_RING_SIZE 1024 -> 128, DP_RXDMA_MONITOR_DESC_RING_SIZE
-4096 -> 128 and ATH11K_DP_RXDMA_REFILL_RING_SIZE 2048 -> 512.
+4096 -> 128 only. The HTT buffer byte size stays2048; it is not a ring capacity.
 
 The NSS Wi-Fi datapath sizes its RX descriptor pool from
 DP_RXDMA_BUF_RING_SIZE (WIFILI_RX_DESC_POOL_WEIGHT * ring size), so this
@@ -57,17 +57,3 @@ Signed-off-by: Gustavo Foletto Mora <gusfmora@gmail.com>
  
  #define DP_RX_RELEASE_RING_NUM	3
  
---- a/drivers/net/wireless/ath/ath11k/hw.h
-+++ b/drivers/net/wireless/ath/ath11k/hw.h
-@@ -22,7 +22,11 @@
- #define ATH11K_DP_RXDMA_MON_STATUS_RING_SIZE	512
- #define ATH11K_DP_RXDMA_MONITOR_BUF_RING_SIZE	128
- #define ATH11K_DP_RXDMA_MONITOR_DST_RING_SIZE	128
-+#ifdef CPTCFG_ATH11K_MEM_PROFILE_256M
-+#define ATH11K_DP_RXDMA_REFILL_RING_SIZE	512
-+#else
- #define ATH11K_DP_RXDMA_REFILL_RING_SIZE	2048
-+#endif
- /* 256b desc TLV + 4b(rounded) Pad + 30byte max nwifi header +
-  * 18byte mesh hdr + 8byte snap + 1500 eth payload
-  */

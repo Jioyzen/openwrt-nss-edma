@@ -1,0 +1,18 @@
+#!/bin/sh
+# ImmortalWrt LuCI getTempInfo hook; read TSENS directly, without a daemon.
+sep=
+for zone in /sys/class/thermal/thermal_zone*; do
+ [ -r "$zone/type" ] && [ -r "$zone/temp" ] || continue
+ read -r type < "$zone/type"
+ case "$type" in
+  cpu-thermal) label=CPU ;;
+  ubi32-thermal) label=NSS ;;
+  *) continue ;;
+ esac
+ read -r value < "$zone/temp"
+ case "$value" in ''|*[!0-9-]*) continue ;; esac
+ [ "$value" -gt -40000 ] && [ "$value" -lt 150000 ] || continue
+ printf '%s%s: %s.%s°C' "$sep" "$label" "$((value / 1000))" "$(( (value % 1000) / 100 ))"
+ sep=' / '
+done
+[ -z "$sep" ] || printf '\n'

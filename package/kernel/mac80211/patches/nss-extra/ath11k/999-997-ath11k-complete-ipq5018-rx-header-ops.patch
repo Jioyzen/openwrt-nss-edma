@@ -1,0 +1,24 @@
+From: LYW-30M port <local@localhost>
+Subject: [PATCH] wifi: ath11k: complete IPQ5018 RX header callbacks for NSS
+
+IPQ5018 and QCN6122 share the QCN9074 receive descriptor format. The NSS
+header-TLV reconstruction patch populated QCN9074 ops but missed the
+separate IPQ5018 table, leaving four new callbacks NULL. Host-mode encrypted
+RX then calls rx_desc_get_crypto_header at hw_ops+344 and jumps to address0.
+Populate all four existing QCN9074 callbacks; do not suppress valid frames
+or bypass header reconstruction. Verified by matching the RAM1 exception
+LR to ath11k_get_dot11_hdr_from_rx_desc+0x178 and its BLR through offset344.
+
+--- a/drivers/net/wireless/ath/ath11k/hw.c
++++ b/drivers/net/wireless/ath/ath11k/hw.c
+@@ -1537,6 +1537,10 @@
+ #ifdef CPTCFG_ATH11K_MEM_PROFILE_512M
+ 	.rx_desc_get_offset = ath11k_hw_qcn9074_rx_desc_get_offset,
+ #endif
++	.rx_desc_get_mpdu_frame_ctl = ath11k_hw_qcn9074_rx_desc_get_mpdu_frame_ctl,
++	.rx_desc_dot11_hdr_fields_valid = ath11k_hw_qcn9074_rx_desc_dot11_hdr_fields_valid,
++	.rx_desc_get_dot11_hdr = ath11k_hw_qcn9074_rx_desc_get_dot11_hdr,
++	.rx_desc_get_crypto_header = ath11k_hw_qcn9074_rx_desc_get_crypto_hdr,
+ };
+ 
+ #define ATH11K_TX_RING_MASK_0 BIT(0)

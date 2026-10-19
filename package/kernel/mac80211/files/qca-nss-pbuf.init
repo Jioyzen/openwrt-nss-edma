@@ -37,7 +37,10 @@ soc_is_ipq5018() {
 }
 
 apply_sysctl() {
-  [ "$(sysctl -n -e dev.nss.general.redirect)" -eq 0 ] && /etc/init.d/qca-nss-ecm start
+  # dwmac runtime loads ECM only after its DSA/VLAN nodes are ready.
+  if [ ! -d /sys/module/qca_dwmac_nss ]; then
+    [ "$(sysctl -n -e dev.nss.general.redirect)" -eq 0 ] && /etc/init.d/qca-nss-ecm start
+  fi
 
   # Running this script multiple times is useless, as extra_pbuf_core0
   # can't be changed if it is allocated, assume it's already been run.
@@ -86,20 +89,27 @@ apply_nss_config() {
   local auto_scale num_cpus
   local hash_bitmap
 
-  if [ ! -r /sys/module/ath11k/parameters/nss_offload ]; then
-    # Expected during boot: with Wi-Fi offload the ath11k modules are loaded
-    # late, by nss-dwmac-up, which re-runs this script afterwards. Only say
-    # something when nobody is going to come back for us.
-    [ "$(uci -q get nss.general.wifi_offload)" = 1 ] ||
-      logger -t $NAME "Module parameter '/sys/module/ath11k/parameters/nss_offload' does NOT exist. Skipping applying wifi nss configs"
-    exit 1
-  fi
+  # Packet pools serve wired NSS too. The dwmac runtime calls us after
+  # arming the core and before loading ath11k; do not gate them on Wi-Fi.
+  if [ -d /sys/module/qca_dwmac_nss ]; then
+    [ "$(cat /sys/kernel/debug/qca-dwmac-nss/fw_mask 2>/dev/null)" != 0x0 ] || return 0
+    [ -r /sys/kernel/debug/qca-nss-drv/stats/n2h ] || return 0
+  else
+    if [ ! -r /sys/module/ath11k/parameters/nss_offload ]; then
+      # Expected during boot: with Wi-Fi offload the ath11k modules are loaded
+      # late, by nss-dwmac-up, which re-runs this script afterwards. Only say
+      # something when nobody is going to come back for us.
+      [ "$(uci -q get nss.general.wifi_offload)" = 1 ] ||
+        logger -t $NAME "Module parameter '/sys/module/ath11k/parameters/nss_offload' does NOT exist. Skipping applying wifi nss configs"
+      exit 1
+    fi
 
-  enable_nss_offload=$(cat /sys/module/ath11k/parameters/nss_offload)
+    enable_nss_offload=$(cat /sys/module/ath11k/parameters/nss_offload)
 
-  if [ "$enable_nss_offload" -ne "1" ]; then
-    logger -t $NAME -s user.warn "Module parameter 'nss_offload=0'. Skipping applying wifi nss configs"
-    exit 1
+    if [ "$enable_nss_offload" -ne "1" ]; then
+      logger -t $NAME -s user.warn "Module parameter 'nss_offload=0'. Skipping applying wifi nss configs"
+      exit 1
+    fi
   fi
 
   [ ! -d "/proc/sys/dev/nss/rps" ] && {

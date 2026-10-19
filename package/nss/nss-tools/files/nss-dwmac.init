@@ -76,7 +76,7 @@ wifi_load() {
 #   nss.general.switch_args  any further fabric module parameters, verbatim,
 #                            e.g. 'cpu_port=6 ports=0x7c wake_phys=...'
 #                            for a QCA8337 with the CPU port on port 6
-. /lib/functions.sh
+[ -n "$IPKG_INSTROOT" ] || . /lib/functions.sh
 
 switch_to_trunk() {
 	local dev vtu args fabric driver

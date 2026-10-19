@@ -1,0 +1,10 @@
+{
+  "lyw-temperature": {
+    "description": "Read router temperatures in the status overview",
+    "read": {
+      "ubus": {
+        "luci": [ "getTempInfo" ]
+      }
+    }
+  }
+}
