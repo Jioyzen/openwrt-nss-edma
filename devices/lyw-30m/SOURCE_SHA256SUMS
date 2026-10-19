@@ -1,0 +1,16 @@
+de3af806fd2172950234e674296c960870a748a15bb2506c0b65374337b25a86  package/kernel/mac80211/Makefile
+f79a178a2d9fd7328cce32b65b2956d15ba3e017e6163d0078041f50d1a4813e  package/kernel/mac80211/ath.mk
+589abe168b0813d0844d576a17d63d72af46809231076522f1dd82fcc2bc2bc8  package/kernel/mac80211/patches/ath11k/950-wifi-ath11k-implement-CE-interrupt-enable-disable-for-AHB.patch
+c6d6343ac99515bb698a0e267efec041c740282cf3877a3db861f2522a8c8dd8  package/kernel/mac80211/patches/ath11k/951-wifi-ath11k-introduct-CONFIG_ATH11K_SMALLBUFFERS.patch
+c3ff34e94b48657187f1295f9c426f9c21174308b14567094180791941f9872d  package/kernel/mac80211/patches/ath11k/953-wifi-ath11k-disable-interrupts-during-firmware-crash-recovery.patch
+91d0343497e21e8463308310be7cf81f4cc2690d9b8cfa23c53a33f911816654  package/kernel/mac80211/patches/ath11k/954-wifi-ath11k-only-spare-the-wake-CE-on-chips-that-can-suspend.patch
+ce6346177724a9fd22ce78f377a649ce377624f65223feb5c9b40809d133c0f0  target/linux/qualcommax/dts/ipq5018-lyw-30m.dts
+217d143d94a9c37cc8a34db7d040d5a473b7bec77a950591316d82bd46a07da1  target/linux/qualcommax/image/ipq50xx.mk
+fa9a15bc3422040073bdd145e4ca4a5f50b7c86eefa092713a34a90f671e1f26  target/linux/qualcommax/ipq50xx/base-files/etc/board.d/02_network
+5ce96454e1b2fa3104ede8786ca5060ee866147e913e960a423bfb4354b6c021  target/linux/qualcommax/ipq50xx/base-files/etc/hotplug.d/firmware/11-ath11k-caldata
+5b6538f2bf16f4fa0ff2b804138ed333fb82cb7fab7ea888b975cddba73417d0  target/linux/qualcommax/ipq50xx/base-files/lib/upgrade/platform.sh
+075fa51eeeb749c661054678b1b54060940efa64ba5512f488f554245d157ef7  target/linux/qualcommax/patches-6.12/0819-remoteproc-qcom-bound-wcss-userpd-indices.patch
+244593caa91bdee915b04bf4d90f259209e8858bbb6908ae07261ad1ec1b2ae0  target/linux/qualcommax/patches-6.12/0821-remoteproc-qcom_q6v5_mpd-tear-down-user-pd-when-root-pd-is-dead.patch
+e1502a34666e16b0d0e3ac70446733910aa5a619d44129a8eaba195da3709fb6  target/linux/qualcommax/patches-6.12/0822-remoteproc-qcom_q6v5_mpd-unwind-a-failed-root-pd-start.patch
+0c2784c30e97f6bac05a2001ff518d31eed0b77ccb066626ec106fc39cc47b7f  target/linux/qualcommax/patches-6.12/0823-remoteproc-qcom_q6v5_mpd-recover-users-after-root-ssr.patch
+0dccb5d1814ae0b19e6b71733a715fd7a2be89580e2a5b32546ae19793626926  target/linux/qualcommax/patches-6.12/0918-soc-qcom-smp2p-clear-cached-inbound-values-on-restart.patch

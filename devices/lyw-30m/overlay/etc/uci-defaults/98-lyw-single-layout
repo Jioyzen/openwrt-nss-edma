@@ -1,0 +1,6 @@
+#!/bin/sh
+# Mark restored pre-migration configuration as using the installed single UBI layout.
+[ "$(cat /tmp/sysinfo/board_name)" = 'lingyan,lyw-30m' ] || exit 1
+grep -qx 'STORAGE_LAYOUT=single-ubi-v1' /etc/lyw-release || exit 1
+uci -q get 'system.@system[0]' >/dev/null || exit 1
+uci set 'system.@system[0].compat_version=2.0' && uci commit system

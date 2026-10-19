@@ -1,0 +1,5 @@
+# Describes the current AP test policy; no firewall daemon is installed.
+config defaults
+ option input 'ACCEPT'
+ option output 'ACCEPT'
+ option forward 'ACCEPT'

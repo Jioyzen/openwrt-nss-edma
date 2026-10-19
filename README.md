@@ -1,3 +1,12 @@
+# LYW-30M / IPQ5018 OpenWrt
+
+本维护分支固定 Linux 6.12.80，提供 LYW-30M 的 ath11k-smallbuffers 双频 Wi-Fi 6、
+QCA8337 四口桥接及 119MiB NAND 单系统支持。
+设备说明、固定源码版本、构建方法和升级恢复限制见 [LYW-30M 文档](devices/lyw-30m/README.md)。
+原厂备份、板级 BDF/ART 数据和个人密钥不包含在本仓库中。
+
+---
+
 ![OpenWrt logo](include/logo.png)
 
 OpenWrt Project is a Linux operating system targeting embedded devices. Instead

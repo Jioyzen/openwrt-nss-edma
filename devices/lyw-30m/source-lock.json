@@ -1,0 +1,42 @@
+{
+  "baseline_repository": "https://github.com/openwrt/openwrt.git",
+  "baseline_commit": "a5c5ca0666533a0af027e73f80fbc94f21be54c3",
+  "kernel": "6.12.80",
+  "feeds": [
+    {
+      "repository": "https://github.com/openwrt/luci.git",
+      "commit": "eabe1288afe024566b930b26681a722ccf07b19b",
+      "commit_date": "2026-04-13T17:22:25Z"
+    },
+    {
+      "repository": "https://github.com/openwrt/packages.git",
+      "commit": "9e7cb54a094d87e16c33bc398a53f3a88f059b87",
+      "commit_date": "2026-04-14T07:49:10Z"
+    }
+  ],
+  "source_patch_reproduction_files": 16,
+  "writable_physical_regions": [
+    "rootfs=0x900000+0x7700000"
+  ],
+  "stock_slot0_retained": false,
+  "storage_layout": "single-ubi-v1",
+  "device_profile": "lingyan_lyw-30m-single",
+  "backports": "6.18.7",
+  "ath11k_firmware_commit": "795809c7041582bd51bdfaa1f548b916ae8d4382",
+  "ath11k_firmware_version": "WLAN.HK.2.7.0.1-01744-QCAHKSWPL_SILICONZ-1",
+  "smallbuffers_source_commit": "5e6237857bbce445a274185383b2fd8affb81e33",
+  "bdencoder_url": "https://raw.githubusercontent.com/qca/qca-swiss-army-knife/master/tools/scripts/ath11k/ath11k-bdencoder",
+  "bdencoder_sha256": "4a2181d16d6ff35d60773b75aaa1bbe349afea7f03d4d2d97a596b81636a9e87",
+  "source_reference_build": "production8 (built, not installed); production7 verified on NAND",
+  "board_source_sha256": {
+    "IPQ5018": "e94a90199468f187cbff91ca73c9b283bb3ad244cd687aa930155254700e8928",
+    "QCN6122": "f65f26a7ad212898c2ccd2fdfcc89de7b8b72b1e957b5e1532988a18a543a38d"
+  },
+  "private_inputs_excluded": [
+    "OEM NAND/ART/caldata backups",
+    "original BDF payloads",
+    "SSH keys and authorized_keys",
+    "live network and wireless credentials"
+  ],
+  "smallbuffers_reference": "https://github.com/openwrt/openwrt/pull/21495"
+}

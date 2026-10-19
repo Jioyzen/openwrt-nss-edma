@@ -1,0 +1,4 @@
+# AP validation: the upstream router provides DHCP.
+config dhcp 'lan'
+ option interface 'lan'
+ option ignore '1'
