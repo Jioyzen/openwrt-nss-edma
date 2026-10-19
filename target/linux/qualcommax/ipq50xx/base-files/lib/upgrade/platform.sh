@@ -1,10 +1,11 @@
 . /lib/functions/bootconfig.sh
+. /lib/upgrade/lyw-30m.sh
 
 PART_NAME=firmware
 REQUIRE_IMAGE_METADATA=1
 
-RAMFS_COPY_BIN='dumpimage fw_printenv fw_setenv head seq'
-RAMFS_COPY_DATA='/etc/fw_env.config /var/lock/fw_printenv.lock'
+RAMFS_COPY_BIN='dumpimage fw_printenv fw_setenv head seq sha256sum cut hexdump'
+RAMFS_COPY_DATA='/etc/fw_env.config /var/lock/fw_printenv.lock /tmp/sysinfo/board_name /etc/lyw-release /lib/upgrade/lyw-30m.sh'
 
 xiaomi_initramfs_prepare() {
 	# Wipe UBI if running initramfs
@@ -166,6 +167,9 @@ linksys_mx_pre_upgrade() {
 }
 
 platform_check_image() {
+	case "$(board_name)" in
+	lingyan,lyw-30m) lyw_check_image "$1"; return $? ;;
+	esac
 	return 0;
 }
 
@@ -179,6 +183,9 @@ platform_pre_upgrade() {
 
 platform_do_upgrade() {
 	case "$(board_name)" in
+	lingyan,lyw-30m)
+		lyw_nand_upgrade "$1"
+		;;
 	cmcc,mr3000d-ci|\
 	cmcc,pz-l8|\
 	elecom,wrc-x3000gs2|\

@@ -250,3 +250,25 @@ define Device/zyxel_scr50axe
 		ipq-wifi-zyxel_scr50axe
 endef
 TARGET_DEVICES += zyxel_scr50axe
+
+# Single-system UBI across all NAND after the protected boot/calibration region.
+define Device/lingyan_lyw-30m-single
+ $(call Device/FitImageLzma)
+ $(call Device/UbiFit)
+ DEVICE_VENDOR := Lingyan
+ DEVICE_MODEL := LYW-30M
+ SOC := ipq5018
+ DEVICE_DTS := ipq5018-lyw-30m
+ DEVICE_DTS_CONFIG := config@mp03.3
+ KERNEL_LOADADDR := 0x41000000
+ BLOCKSIZE := 128k
+ PAGESIZE := 2048
+ IMAGE_SIZE := 121856k
+ NAND_SIZE := 128m
+ SUPPORTED_DEVICES := lingyan,lyw-30m
+ DEVICE_COMPAT_VERSION := 2.0
+ DEVICE_COMPAT_MESSAGE := Requires the LYW-30M single-system 119MiB UBI layout and dedicated U-Boot boot command.
+ DEVICE_PACKAGES := nand-utils mtd ubi-utils dumpimage kmod-ath11k-ahb wpad-basic-mbedtls ath11k-firmware-ipq5018-qcn6122 -uboot-envtools \
+  -kmod-usb3 -kmod-usb-dwc3 -kmod-usb-dwc3-qcom -e2fsprogs -kmod-fs-ext4 -losetup
+endef
+TARGET_DEVICES += lingyan_lyw-30m-single

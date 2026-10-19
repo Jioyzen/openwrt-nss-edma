@@ -7,6 +7,10 @@ ipq50xx_setup_interfaces()
 {
 	local board="$1"
 	case $board in
+	lingyan,lyw-30m)
+		ucidef_set_compat_version "2.0"
+		ucidef_set_interface_lan "wan lan1 lan2 lan3"
+		;;
 	elecom,wrc-x3000gs2|\
 	iodata,wn-dax3000gr|\
 	linksys,mr5500|\

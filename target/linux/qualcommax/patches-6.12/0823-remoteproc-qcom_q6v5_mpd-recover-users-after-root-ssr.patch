@@ -1,0 +1,96 @@
+From: LYW-30M port maintenance
+Subject: [PATCH] remoteproc: qcom_q6v5_mpd: recover active users after root SSR
+
+On LYW-30M, an actual firmware assert restarts only the root. Both user
+PD states remain running, their ready IRQ counts do not increase, QMI
+commands keep returning -108, and AP status is stale. Generic root
+recovery does not know that these separate rprocs died too.
+
+Use a root subdevice to remember active users on a crash and report their
+crashes asynchronously only after root/GLINK restart. Normal child recovery
+then releases/reacquires each parent power reference and respawns firmware.
+Do not recover the unused offline PD, take child locks under the root lock,
+or change remoteproc core state/refcounts directly.
+
+This is a local experimental fix; it requires real assert and reload tests.
+
+--- a/drivers/remoteproc/qcom_q6v5_mpd.c
++++ b/drivers/remoteproc/qcom_q6v5_mpd.c
+@@ -87,6 +87,8 @@
+ 	const struct wcss_data *desc;
+ 	const char **firmware;
+ 	struct userpd *upd[MAX_UPD + 1];
++	struct rproc_subdev recovery_subdev;
++	unsigned long restart_users;
+ };
+ 
+ struct userpd {
+@@ -114,6 +116,48 @@
+ 	u8 bit = upd->q6.spawn_bit;
+ 
+ 	return bit / 8;
++}
++
++/* A root restart also destroys every active user PD. The remoteproc core
++ * only recovers the root itself; queue the children's normal recovery after
++ * the root and its GLINK edge have returned. Never take a child lock here:
++ * its stop/load callbacks acquire the root lock, which our caller holds.
++ */
++static void q6_wcss_recovery_stop(struct rproc_subdev *subdev, bool crashed)
++{
++	struct q6_wcss *wcss = container_of(subdev, struct q6_wcss,
++					  recovery_subdev);
++	int i;
++
++	wcss->restart_users = 0;
++	if (!crashed)
++		return;
++
++	for (i = 1; i < ARRAY_SIZE(wcss->upd); i++) {
++		struct userpd *upd = wcss->upd[i];
++
++		if (upd && READ_ONCE(upd->q6.rproc->state) == RPROC_RUNNING)
++			wcss->restart_users |= BIT(i);
++	}
++}
++
++static int q6_wcss_recovery_start(struct rproc_subdev *subdev)
++{
++	struct q6_wcss *wcss = container_of(subdev, struct q6_wcss,
++					  recovery_subdev);
++	unsigned long users = wcss->restart_users;
++	int i;
++
++	wcss->restart_users = 0;
++	for (i = 1; i < ARRAY_SIZE(wcss->upd); i++) {
++		if (!(users & BIT(i)))
++			continue;
++
++		dev_info(wcss->dev, "recovering user PD %d after root restart\n", i);
++		rproc_report_crash(wcss->upd[i]->q6.rproc, RPROC_FATAL_ERROR);
++	}
++
++	return 0;
+ }
+ 
+ static int q6_wcss_start(struct rproc *rproc)
+@@ -841,6 +885,11 @@
+ 	qcom_add_glink_subdev(rproc, &wcss->glink_subdev, "q6wcss");
+ 	qcom_add_ssr_subdev(rproc, &wcss->ssr_subdev, "q6wcss");
+ 
++	/* Register last: GLINK must be recreated before user PDs respawn. */
++	wcss->recovery_subdev.start = q6_wcss_recovery_start;
++	wcss->recovery_subdev.stop = q6_wcss_recovery_stop;
++	rproc_add_subdev(rproc, &wcss->recovery_subdev);
++
+ 	rproc->auto_boot = false;
+ 	ret = rproc_add(rproc);
+ 	if (ret)
+@@ -875,6 +924,7 @@
+ 	qcom_q6v5_deinit(&wcss->q6);
+ 
+ 	rproc_del(rproc);
++	rproc_remove_subdev(rproc, &wcss->recovery_subdev);
+ 	rproc_free(rproc);
+ }
+ 
