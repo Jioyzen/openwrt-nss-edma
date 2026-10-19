@@ -108,11 +108,15 @@ pbuf_tune() {
     return 0
   fi
   if poll_until 30 nss_core_ready; then
-    /etc/init.d/qca-nss-pbuf start >/dev/null 2>&1 || true
+    if ! /etc/init.d/qca-nss-pbuf start no-reload; then
+      echo "WARN: NSS pool configuration failed; pool budget is not verified"
+      return 1
+    fi
     PBUF_TUNED=1
     echo "pbuf pools sized (extra_pbuf_core0=$(sysctl -n dev.nss.n2hcfg.extra_pbuf_core0 2>/dev/null))"
   else
     echo "WARN: NSS core not ready after 30s - pbuf pools stay at their defaults"
+    return 1
   fi
   return 0
 }
@@ -152,7 +156,11 @@ wifi_load_now() {
   # this function also runs after a failed takeover, where there is no core to
   # wait for and the whole point is to get the radios up on the host quickly.
   if [ "$offload" = 1 ]; then
-    pbuf_tune
+    if ! pbuf_tune; then
+      echo "WARN: falling back to host Wi-Fi because the NSS pool budget is not verified"
+      offload=0
+      echo 0 > /sys/module/ath11k/parameters/nss_offload
+    fi
   fi
   modprobe ath11k_ahb 2>/dev/null || true
   WIFI_LOADED_HERE=1
@@ -270,7 +278,7 @@ wifi_load_now 1
 # On the Wi-Fi offload path the call above already did this; on every other
 # path wifi_load_now returned early and this is the only chance to size the
 # pools after the arm.
-pbuf_tune
+pbuf_tune || echo "WARN: wired NSS continues with an unverified pool budget"
 
 # Only now teach the firmware the VLANs: on load, vlan-mgr's netdevice
 # notifier replays NETDEV_REGISTER for every existing netdev, so it

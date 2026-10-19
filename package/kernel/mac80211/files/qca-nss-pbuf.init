@@ -22,6 +22,7 @@ reload_wifi() {
     nss_offload=$(cat /sys/module/ath11k/parameters/nss_offload 2> /dev/null)
     [ "$nss_offload" -eq 1 ] && wifi up
   fi
+  return 0
 }
 
 get_num_cpus() {
@@ -36,29 +37,40 @@ soc_is_ipq5018() {
   tr '\0' '\n' 2> /dev/null < /proc/device-tree/compatible | grep -qx 'qcom,ipq5018'
 }
 
+set_pool_sysctl() {
+  local key="$1" value="$2" expected="${3:-$2}" actual
+  if ! sysctl -w "$key=$value" >/dev/null 2>&1; then
+    logger -t "$NAME" -p user.err "Failed to configure $key=$value"
+    return 1
+  fi
+  actual=$(sysctl -n "$key" 2>/dev/null) || return 1
+  if [ "$actual" != "$expected" ]; then
+    logger -t "$NAME" -p user.err "$key readback=$actual, expected=$expected"
+    return 1
+  fi
+}
+
 apply_sysctl() {
+  local allocated expected_extra
   # dwmac runtime loads ECM only after its DSA/VLAN nodes are ready.
   if [ ! -d /sys/module/qca_dwmac_nss ]; then
     [ "$(sysctl -n -e dev.nss.general.redirect)" -eq 0 ] && /etc/init.d/qca-nss-ecm start
   fi
 
-  # Running this script multiple times is useless, as extra_pbuf_core0
-  # can't be changed if it is allocated, assume it's already been run.
-  if [ "$(sysctl -n -e dev.nss.n2hcfg.extra_pbuf_core0)" -eq 0 ]; then
-    logger -t $NAME "$board - setting dev.nss.n2hcfg.extra_pbuf_core0=$extra_pbuf_core0"
-    sysctl -w dev.nss.n2hcfg.extra_pbuf_core0="$extra_pbuf_core0" > /dev/null 2>&1
-  else
-    logger -t $NAME "Sysctl key 'extra_pbuf_core0' already set to '""$extra_pbuf_core0""'. Skipping applying wifi nss configs"
+  # These targets use 4 KiB pages. The driver reports the allocated,
+  # page-rounded size, not the requested byte count (800000 -> 802816).
+  expected_extra=$(( (extra_pbuf_core0 + 4095) / 4096 * 4096 ))
+  allocated=$(sysctl -n dev.nss.n2hcfg.extra_pbuf_core0 2>/dev/null) || return 1
+  case "$allocated" in ''|*[!0-9]*) return 1 ;; esac
+  if [ "$allocated" = 0 ]; then
+    set_pool_sysctl dev.nss.n2hcfg.extra_pbuf_core0 "$extra_pbuf_core0" "$expected_extra" || return 1
+  elif [ "$allocated" != "$expected_extra" ]; then
+    logger -t "$NAME" -p user.err "Existing extra_pbuf_core0=$allocated, expected=$expected_extra; reboot to change the pool profile"
+    return 1
   fi
-
-  sysctl -w dev.nss.n2hcfg.n2h_high_water_core0="$n2h_high_water_core0" > /dev/null 2>&1
-
-  logger -t $NAME "$board - setting dev.nss.n2hcfg.n2h_wifi_pool_buf=$n2h_wifi_pool_buf"
-  sysctl -w dev.nss.n2hcfg.n2h_wifi_pool_buf="$n2h_wifi_pool_buf" > /dev/null 2>&1
-
-  logger -t $NAME "$board - setting dev.nss.n2hcfg.n2h_high_water_core0=$n2h_high_water_core0"
-  sysctl -w dev.nss.n2hcfg.n2h_high_water_core0="$n2h_high_water_core0" > /dev/null 2>&1
-
+  set_pool_sysctl dev.nss.n2hcfg.n2h_high_water_core0 "$n2h_high_water_core0" || return 1
+  set_pool_sysctl dev.nss.n2hcfg.n2h_wifi_pool_buf "$n2h_wifi_pool_buf" || return 1
+  logger -t "$NAME" "$board - pools verified: extra=$expected_extra high_water=$n2h_high_water_core0 wifi=$n2h_wifi_pool_buf"
 }
 
 # The queue the firmware hands the host its packets through: traffic for the
@@ -266,11 +278,14 @@ start() {
 
   set_scaling_governor
   set_stats_disable
-  apply_nss_config
+  apply_nss_config || return $?
 
   num_cpus=$(get_num_cpus)
   hash_bitmap="$(((1 << num_cpus) - 1))"
   sysctl -w dev.nss.rps.hash_bitmap=$hash_bitmap > /dev/null 2>&1
-  reload_wifi
+  # Boot orchestration configures pools before the radios bind and handles
+  # netifd itself; do not request an early setup of PHYs that do not exist.
+  [ "${1:-}" = no-reload ] || reload_wifi
+  return 0
 
 }
