@@ -39,7 +39,9 @@ lib/firmware/ath11k/QCN6122/hw1.0/board-2.bin
 
 板载 5GHz 芯片曾标识为 QCN6102；当前已验证驱动使用 QCN6122 固件目录。ART 校准数据由板级 hotplug 从本机 `0:ART` 提取。仓库不分发 BDF、ART、MAC、密码哈希、SSH 密钥和个人网络配置。
 
-完整公开配置保留 NAND22 的功能选择，并移除本机外置工具链路径，改用源码内工具链。`configs/lyw-30m-nss125-router.config` 是精简功能片段。公开 overlay 提供简体中文、Argon、上海时区、国内 NTP、NSS 模式和 LED 通知脚本；LED 只观察链路/路由通知，不发送探测包，不能据此证明公网真正可达。HTTP 默认 80，初始账户 `root` / `password`，网络使用板级标准路由默认配置。
+完整公开配置保留 NAND22 的功能选择，并移除本机外置工具链路径，改用源码内工具链。`configs/lyw-30m-nss125-router.config` 是精简功能片段。公开 overlay 提供简体中文、Argon、上海时区、国内 NTP、NSS 模式和 LED 通知脚本；LED 只观察链路/路由通知，不发送探测包，不能据此证明公网真正可达。HTTP 默认 80，初始账户 `root` / `password`，LAN 地址为 `192.168.2.1/24`，LAN1/2/3 和 Wi-Fi 桥接并提供 DHCP，WAN 为 DHCP、WAN6 为 DHCPv6。SSH 仅在 LAN 提供密码登录，主机密钥首次启动生成。
+
+公开初始 Wi-Fi：2.4GHz `LYW-2.4G`、5GHz `LYW-5G`，均开放不加密，国家 CN、信道 auto、不指定 txpower。频宽采用上游 Wi-Fi 6 初始值 HE20 / HE80；OpenWrt 没有通用的 `htmode=auto`。保留每频段最多 32 个客户端的低内存设备预算。新默认值不复制旧 NAND22 的 AP 地址、上级网关、无线密码或固定射频参数；保留配置升级仍以用户备份为准。
 
 这是一套可移植的构建输入，不是 NAND22 的逐字节重建承诺：原镜像还使用了私有网络覆盖配置、外置 GCC 14.3.0 工具链及本机签名材料。已在独立目录验证锁定 feeds 的获取、两项补丁校验、overlay 重复生成和 `make defconfig`；展开后启用的软件包清单没有增减。新增公开构建配方尚未完成整镜像重新编译和实机验收。请勿将持续变化的公共 snapshot 内核模块直接混装到此固定版本；应从同一源码和配置构建所需模块。
 

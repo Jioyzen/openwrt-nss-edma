@@ -10,8 +10,15 @@ set_led() {
 	echo "$value" > "$led/brightness" 2>/dev/null
 }
 
-if [ "$(cat /sys/class/net/br-lan/carrier 2>/dev/null)" = 1 ] &&
-	ip route show default 2>/dev/null | grep -q '^default '; then
+online=0
+# Follow the default route's egress in both router and bridged AP modes.
+# Route/link notifications trigger this check; it sends no probe packets.
+for dev in $(ip -4 route show default 2>/dev/null | awk '{for (i=1; i<NF; i++) if ($i == "dev") print $(i+1)}'); do
+	[ "$(cat "/sys/class/net/$dev/carrier" 2>/dev/null)" = 1 ] || continue
+	online=1
+	break
+done
+if [ "$online" = 1 ]; then
 	set_led "$R" 0
 	set_led "$G" 1
 	now=online
