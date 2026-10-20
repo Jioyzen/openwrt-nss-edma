@@ -1,0 +1,14 @@
+#!/bin/sh
+# A restored /etc/config/system may predate the single-system conversion.
+# Mark version 2 only after proving the running device/layout write policy.
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = 'lingyan,lyw-30m' ] || exit 0
+[ -e /proc/device-tree/chosen/lingyan,nand-writable ] || exit 0
+. /lib/functions.sh
+. /lib/upgrade/common.sh
+. /lib/upgrade/nand.sh
+. /lib/upgrade/lyw-30m.sh
+lyw_layout_check || exit 1
+uci -q get system.@system[0] >/dev/null || exit 1
+uci -q set system.@system[0].compat_version='2.0' || exit 1
+uci -q commit system || exit 1
+exit 0
