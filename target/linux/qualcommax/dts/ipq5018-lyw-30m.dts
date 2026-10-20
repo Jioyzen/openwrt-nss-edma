@@ -33,6 +33,23 @@
   reset { label = "reset"; gpios = <&tlmm 27 GPIO_ACTIVE_LOW>; linux,code = <KEY_RESTART>; debounce-interval = <60>; };
   wps { label = "wps"; gpios = <&tlmm 38 GPIO_ACTIVE_LOW>; linux,code = <KEY_WPS_BUTTON>; debounce-interval = <60>; };
  };
+ leds {
+  compatible = "gpio-leds";
+  pinctrl-0 = <&led_pins>;
+  pinctrl-names = "default";
+
+  led_power: power {
+   label = "green:power";
+   gpios = <&tlmm 23 GPIO_ACTIVE_LOW>;
+   linux,default-trigger = "default-on";
+  };
+
+  led_network: network {
+   label = "green:network";
+   gpios = <&tlmm 28 GPIO_ACTIVE_LOW>;
+   linux,default-trigger = "none";
+  };
+ };
 };
 // 8MiB remains experimental: delayed recovery panic needs a 16MiB control.
 // Keep all original reserved ranges while isolating the failure.
@@ -143,6 +160,7 @@
 };
 &tlmm {
  keys_pins: keys-state { pins = "gpio27", "gpio38"; function = "gpio"; drive-strength = <8>; bias-pull-up; };
+ led_pins: led-state { pins = "gpio23", "gpio28"; function = "gpio"; drive-strength = <8>; bias-disable; };
  serial_0_pins: uart0-state { pins = "gpio20", "gpio21"; function = "blsp0_uart0"; bias-disable; };
  mdio1_pins: mdio-state {
   mdc-pins { pins = "gpio36"; function = "mdc"; drive-strength = <8>; bias-pull-up; };
