@@ -30,7 +30,7 @@ wifi_load_host() {
 	modprobe ath11k 2>/dev/null
 	[ -w $NSSOFF ] && echo 0 > $NSSOFF
 	modprobe ath11k_ahb 2>/dev/null
-	modprobe ath11k_pci 2>/dev/null
+	[ ! -e "/lib/modules/$(uname -r)/ath11k_pci.ko" ] || modprobe ath11k_pci 2>/dev/null
 }
 
 start_service() {
