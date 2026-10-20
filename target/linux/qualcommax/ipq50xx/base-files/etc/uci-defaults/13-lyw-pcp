@@ -1,0 +1,16 @@
+#!/bin/sh
+# Keep free pages available to the buddy allocator on this 256 MiB board.
+# With min_free_kbytes=16384 the default permits about 10 MiB per CPU.
+# Reference: ADCDS/openwrt-xiaomi-ax3000t-rd03v2, 13-rd03v2-pcp.conf.
+# On LYW-30M, fraction 100 limits each CPU to about 0.81 MiB and returned
+# about 10 MiB at idle without changing the atomic-allocation watermarks.
+
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = 'lingyan,lyw-30m' ] || exit 0
+
+mkdir -p /etc/sysctl.d || exit 1
+cat > /etc/sysctl.d/13-lyw-pcp.conf <<'EOF'
+# LYW-30M: bound per-CPU free page caches; retain min_free_kbytes.
+vm.percpu_pagelist_high_fraction = 100
+EOF
+sysctl -q -w vm.percpu_pagelist_high_fraction=100 || exit 1
+exit 0
