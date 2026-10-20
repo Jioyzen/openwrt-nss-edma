@@ -1,0 +1,18 @@
+{
+  "source_commit": "de171c1671debb1eec7356944013fdb14d78b4a2",
+  "source_defaults_auto_applied": true,
+  "files_contains_only_local_BDF": true,
+  "eight_config_files_match_source": true,
+  "target_UCI_parses_configs": true,
+  "device_written": false,
+  "artifacts": {
+    "lyw-nss618-nand23-defaults-squashfs-factory.ubi": {
+      "bytes": 14286848,
+      "sha256": "66c1a308a1ed99ad901e1cb6e78606de4b76970164265da727ba76718687213b"
+    },
+    "lyw-nss618-nand23-defaults-squashfs-sysupgrade.bin": {
+      "bytes": 13445758,
+      "sha256": "418c6b19d42043567818717dc841a12847bc1a16eb230b08fcf0d252b377d799"
+    }
+  }
+}
