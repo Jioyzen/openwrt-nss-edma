@@ -1,0 +1,31 @@
+{
+  "label": "NAND23",
+  "main_commit": "79273817460d66761ce5528ebdf95065d4d362ae",
+  "network_mode": "WAN DHCP, LAN1/2/3 + WiFi br-lan",
+  "lan_ip": "192.168.2.1/24",
+  "ssid_2g": "LYW-2.4G",
+  "ssid_5g": "LYW-5G",
+  "encryption": "none",
+  "channel": "auto",
+  "width_2g": "HE20",
+  "width_5g": "HE80",
+  "txpower": "driver/regulatory default (unset)",
+  "region": "CN",
+  "root_initial_password": "password",
+  "private_SSH_keys_excluded": true,
+  "hostkey_generation": "first boot",
+  "module_files_identical_to_NAND22": 64,
+  "BDF_identical_to_NAND22": true,
+  "device_written": false,
+  "firstboot_runtime_verified": false,
+  "artifacts": {
+    "lyw-nss618-nand23-squashfs-factory.ubi": {
+      "bytes": 14286848,
+      "sha256": "253229f27c9b8f643c2ae9e9be9f7e4dcf277a329f77dafcb938068bc1b0f7dc"
+    },
+    "lyw-nss618-nand23-squashfs-sysupgrade.bin": {
+      "bytes": 13445758,
+      "sha256": "2389a8cdb527a6208d1817c65451e3902a944a66f8ab1930b712e9eee9659f7a"
+    }
+  }
+}
