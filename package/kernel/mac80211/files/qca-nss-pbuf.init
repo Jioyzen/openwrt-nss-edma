@@ -39,6 +39,12 @@ soc_is_ipq5018() {
 
 set_pool_sysctl() {
   local key="$1" value="$2" expected="${3:-$2}" actual
+  # An unchanged setting needs no firmware transaction. In particular, the
+  # driver's default wifi_pool=0 means no dedicated pool, but its write
+  # handler rejects zero as below its minimum allocation size.
+  if actual=$(sysctl -n "$key" 2>/dev/null) && [ "$actual" = "$expected" ]; then
+    return 0
+  fi
   if ! sysctl -w "$key=$value" >/dev/null 2>&1; then
     logger -t "$NAME" -p user.err "Failed to configure $key=$value"
     return 1
