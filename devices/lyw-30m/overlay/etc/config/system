@@ -1,0 +1,26 @@
+config system
+	option hostname 'LYW-30M'
+	option timezone 'CST-8'
+	option zonename 'Asia/Shanghai'
+	option ttylogin '0'
+	option log_size '128'
+	option urandom_seed '0'
+
+config timeserver 'ntp'
+	option enabled '1'
+	option enable_server '0'
+	list server 'ntp.aliyun.com'
+	list server 'ntp.tencent.com'
+	list server 'cn.pool.ntp.org'
+
+config led 'led_power'
+	option name 'Power'
+	option sysfs 'red:power'
+	option trigger 'default-on'
+	option default '1'
+
+config led 'led_network'
+	option name 'Network'
+	option sysfs 'green:network'
+	option trigger 'none'
+	option default '0'

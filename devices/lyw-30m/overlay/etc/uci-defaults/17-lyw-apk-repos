@@ -1,0 +1,11 @@
+#!/bin/sh
+# The external NSS source feed has no matching public binary repository.
+# Preserve the standard repositories; do not expose a nonexistent NSS index.
+f=/etc/apk/repositories.d/distfeeds.list
+[ -f "$f" ] || exit 0
+sed -i '\#/packages/aarch64_cortex-a53/nss/packages.adb#d' "$f"
+for feed in packages luci; do
+	line="https://downloads.openwrt.org/snapshots/packages/aarch64_cortex-a53/$feed/packages.adb"
+	grep -qxF "$line" "$f" || echo "$line" >> "$f"
+done
+exit 0
