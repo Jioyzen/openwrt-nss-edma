@@ -1,6 +1,6 @@
 {
   "board": "LYW-30M AX3000_Q06_V2.0_0223",
-  "firmware_label": "NAND22",
+  "firmware_label": "NAND23",
   "kernel": "6.18.55",
   "nss_firmware": "12.5-210-MP",
   "nss_reserved_mib": 16,
@@ -8,7 +8,7 @@
     "upstream": "https://github.com/kuncy7/openwrt-nss-edma.git",
     "upstream_branch": "c3po-tag-8021q",
     "base_commit": "33ff647739f1f556556a0340afc3438dc85afc38",
-    "installed_image_commit": "c1b1c67a80ebb4350565f3e3f3c00a94f6683671"
+    "installed_image_commit": "de171c1671debb1eec7356944013fdb14d78b4a2"
   },
   "feeds": {
     "packages": {
@@ -33,5 +33,10 @@
     "lib/firmware/ath11k/IPQ5018/hw1.0/board-2.bin": "3c9a34a4705744873bd5f9b886dea7fdd50f7e8df8eeb210837376c6860fae55",
     "lib/firmware/ath11k/QCN6122/hw1.0/board-2.bin": "768f50e973c6a99085a607d5fb499be01205e6d35a89c95519e27c7d31098bb3"
   },
-  "reproducibility": "Public configuration removes the host-specific external toolchain and private unit settings. Not a byte-identical NAND22 image recipe."
+  "reproducibility": "Public configuration uses the source-built toolchain and excludes unit data. NAND23 source defaults and installation were verified; the installed binary used the existing build toolchain, so byte-identical reconstruction is not claimed.",
+  "validated_NAND22_baseline": {
+    "firmware_label": "NAND22",
+    "installed_image_commit": "c1b1c67a80ebb4350565f3e3f3c00a94f6683671"
+  },
+  "installed_image_manifest": "builds/nand23-source-defaults.json"
 }

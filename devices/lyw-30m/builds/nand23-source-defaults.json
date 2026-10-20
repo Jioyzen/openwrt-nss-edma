@@ -4,7 +4,7 @@
   "files_contains_only_local_BDF": true,
   "eight_config_files_match_source": true,
   "target_UCI_parses_configs": true,
-  "device_written": false,
+  "device_written": true,
   "artifacts": {
     "lyw-nss618-nand23-defaults-squashfs-factory.ubi": {
       "bytes": 14286848,
@@ -14,5 +14,79 @@
       "bytes": 13445758,
       "sha256": "418c6b19d42043567818717dc841a12847bc1a16eb230b08fcf0d252b377d799"
     }
-  }
+  },
+  "firstboot_runtime_verified": true,
+  "verification_date": "2026-10-20",
+  "user_confirmed_stable_runtime": true,
+  "installation_method": "stock Web SSH unlock -> stock SSH primary U-Boot install -> user U-Boot Web factory flash",
+  "uboot": {
+    "source_equivalent_commit": "d7daf9fc276b0f910b65ccff168fa3c64dbe7363",
+    "binary_git_description": "f687f0a-dirty",
+    "binary_build_time": "2026-10-20 18:57:10 +0800",
+    "binary_sha256": "5e37b3faa67c816971b2f60400ef0849b3a59f8893e743b87eecfcb6bd071643"
+  },
+  "storage": {
+    "physical_bytes": 134217728,
+    "UBI_offset": 9437184,
+    "UBI_bytes": 124780544,
+    "LEB_bytes": 126976,
+    "volume_LEBs": {
+      "kernel": 32,
+      "rootfs": 75,
+      "rootfs_data": 821
+    },
+    "initial_overlay_available_kib": 87268,
+    "protected13_unchanged": true,
+    "APPSBLENV_CRC_valid": true,
+    "APPSBLENV_changed_keys": [
+      "bootcmd",
+      "lyw_args",
+      "lyw_boot",
+      "lyw_mtd"
+    ],
+    "ECC_failures": 0,
+    "ECC_corrected_bits": 0,
+    "bad_PEBs": 0,
+    "reserved_bad_PEBs": 20
+  },
+  "runtime": {
+    "kernel": "6.18.55",
+    "nss_firmware": "12.5-210-MP.R",
+    "nss_reserved_mib": 16,
+    "CPU_online": "0-1",
+    "LAN3_link": "1000Mbps full duplex",
+    "dual_AP_enabled": true,
+    "dual_ath11k_NSS_enabled": true,
+    "ath11k_memory_mode": 2,
+    "host_NSS_allocation_errors": 0,
+    "ath11k_descriptor_allocation_errors": 0,
+    "firmware_crashes": 0,
+    "OOM_events": 0,
+    "MemTotal_kib": 167292,
+    "post_readback_followup_MemAvailable_kib": [
+      34576,
+      34360,
+      34388,
+      34500
+    ],
+    "throughput_test_in_this_installation_audit": false
+  },
+  "pending_independent_checks": [
+    "physical Reset power-on Web entry",
+    "power-cycle boot",
+    "new installation WAN/NAT/PPPoE and extended dual-band load tests"
+  ],
+  "installed_volume_verification": {
+    "kernel": {
+      "bytes": 4063232,
+      "sha256": "28ddc1ab55676e9d5dbccd61777034adeafe903072298abda6810a92361e5bb2",
+      "full_reserved_volume_matches_factory": true
+    },
+    "rootfs": {
+      "bytes": 9523200,
+      "sha256": "0d0c57cb2716e8859d337dc72561a28374253225530f1f55fa887a11bdc4d160",
+      "full_reserved_volume_matches_factory": true
+    }
+  },
+  "BDF_matches_validated_unit_files": true
 }

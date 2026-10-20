@@ -27,5 +27,7 @@
       "bytes": 13445758,
       "sha256": "2389a8cdb527a6208d1817c65451e3902a944a66f8ab1930b712e9eee9659f7a"
     }
-  }
+  },
+  "superseded_by": "nand23-source-defaults.json",
+  "status": "Earlier image not installed; source-defaults artifact was installed and verified"
 }

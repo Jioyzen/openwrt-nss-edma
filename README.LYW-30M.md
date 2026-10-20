@@ -6,7 +6,8 @@
 
 - 开发上游：[kuncy7/openwrt-nss-edma](https://github.com/kuncy7/openwrt-nss-edma/tree/c3po-tag-8021q)，分支 `c3po-tag-8021q`。
 - 固定上游基线：`33ff647739f1f556556a0340afc3438dc85afc38`。
-- 已安装 NAND22 镜像的主源码提交：`c1b1c67a80ebb4350565f3e3f3c00a94f6683671`。
+- 当前已安装 NAND23 源码提交：`de171c1671debb1eec7356944013fdb14d78b4a2`；镜像SHA和实机验收见 `devices/lyw-30m/builds/nand23-source-defaults.json`。
+- NAND22回退基线提交：`c1b1c67a80ebb4350565f3e3f3c00a94f6683671`，继续保留。
 - Linux 6.18.55，NSS Firmware 12.5-210-MP，NSS LOW / ath11k 256M profile，16MiB NSS reserved-memory。
 - 软件包和 LuCI 来自锁定的 ImmortalWrt feeds；系统核心是 OpenWrt NSS，不能称为完整 ImmortalWrt master。
 - 本分支在上述已安装提交之后补充维护文件；分支 HEAD 与路由器上运行的二进制版本分别记录。
@@ -45,7 +46,7 @@ lib/firmware/ath11k/QCN6122/hw1.0/board-2.bin
 
 公开初始 Wi-Fi：2.4GHz `LYW-2.4G`、5GHz `LYW-5G`，均开放不加密，国家 CN、信道 auto、不指定 txpower。频宽采用上游 Wi-Fi 6 初始值 HE20 / HE80；OpenWrt 没有通用的 `htmode=auto`。保留每频段最多 32 个客户端的低内存设备预算。新默认值不复制旧 NAND22 的 AP 地址、上级网关、无线密码或固定射频参数；保留配置升级仍以用户备份为准。
 
-这是一套可移植的构建输入，不是 NAND22 的逐字节重建承诺：原镜像还使用了私有网络覆盖配置、外置 GCC 14.3.0 工具链及本机签名材料。已在独立目录验证锁定 feeds 的获取、两项补丁校验、overlay 重复生成和 `make defconfig`；展开后启用的软件包清单没有增减。新增公开构建配方尚未完成整镜像重新编译和实机验收。请勿将持续变化的公共 snapshot 内核模块直接混装到此固定版本；应从同一源码和配置构建所需模块。
+这是一套可移植的构建输入，不是 NAND22 的逐字节重建承诺：原镜像还使用了私有网络覆盖配置、外置 GCC 14.3.0 工具链及本机签名材料。已在独立目录验证锁定 feeds 的获取、两项补丁校验、overlay 重复生成和 `make defconfig`；展开后启用的软件包清单没有增减。NAND23已用版本化默认配置完成整镜像构建、原厂Web开SSH、专用U-Boot Web刷写和实机启动验收；安装二进制仍使用构建主机既有工具链，未承诺公开配置切换源码内工具链后的逐字节一致性。请勿将持续变化的公共 snapshot 内核模块直接混装到此固定版本；应从同一源码和配置构建所需模块。
 
 ## 镜像与布局
 
@@ -61,3 +62,9 @@ lib/firmware/ath11k/QCN6122/hw1.0/board-2.bin
 已安装基线完成双频、四口映射、NSS Wi-Fi 桥接、NAND 启动及升级验证；用户报告近距离 5GHz 吞吐接近千兆。8MiB NSS 预留曾出现吞吐回退，因此当前保留 16MiB。长期稳定性、远距离吞吐和每次源码更新后的负载表现仍需分别验证；不承诺零警告或所有标准路由功能均已完成独立压测。
 
 本分支包含本机 DTS、网络/caldata、单系统升级检查、温度读取、内存 profile、ath11k 与 NSS DMA/缓冲修复。NSS feed 的两项本地补丁随系统仓库保存，避免要求第三个维护仓库。上游升级应先固定新 SHA，再检查补丁适用性，完成 RAM 启动和同条件负载对照后发布。
+
+## NAND23 首次安装验收
+
+原厂隐藏Web页面开启SSH、原厂SSH刷专用U-Boot、恢复Web刷NAND23已跑通；用户确认系统稳定、初始化及参数正常。实际kernel/rootfs卷与factory一致，13个保护分区未变，只有4个必要启动环境键迁移；ECC失败/纠正及坏块为0。119MiB单系统UBI的数据卷扩到821LEB，初始可写余量约85MiB。
+
+[实测记录及日志分类](devices/lyw-30m/docs/nand23-validation.zh-CN.md) 说明了PSCI/QMI等尚存兼容提示和未独立压测的范围。NSS源补丁已随本仓库固定保存；本次记录更新不改变正在运行的内核、驱动或参数。U-Boot本轮功能源码提交为 `d7daf9fc276b0f910b65ccff168fa3c64dbe7363`，二进制在提交前构建，实际仍显示f687f0a-dirty；安装与恢复步骤由独立U-Boot仓库维护。
