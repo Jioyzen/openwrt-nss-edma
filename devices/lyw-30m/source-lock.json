@@ -1,0 +1,37 @@
+{
+  "board": "LYW-30M AX3000_Q06_V2.0_0223",
+  "firmware_label": "NAND22",
+  "kernel": "6.18.55",
+  "nss_firmware": "12.5-210-MP",
+  "nss_reserved_mib": 16,
+  "main": {
+    "upstream": "https://github.com/kuncy7/openwrt-nss-edma.git",
+    "upstream_branch": "c3po-tag-8021q",
+    "base_commit": "33ff647739f1f556556a0340afc3438dc85afc38",
+    "installed_image_commit": "c1b1c67a80ebb4350565f3e3f3c00a94f6683671"
+  },
+  "feeds": {
+    "packages": {
+      "url": "https://github.com/immortalwrt/packages.git",
+      "commit": "8d50d4ea3f11eef6f8fcc889cd35ba6fcb530481"
+    },
+    "luci": {
+      "url": "https://github.com/immortalwrt/luci.git",
+      "commit": "17f97c0bec190e18d4884ab8204f63c64981edd7"
+    },
+    "nss": {
+      "url": "https://github.com/kuncy7/nss-packages.git",
+      "commit": "a8e0e5cc073eb5d832dae84c7fcdd514078f7957"
+    }
+  },
+  "nss_local_commit": "c6630e394aa9d7029ef4929a87229a558b69c2e3",
+  "nss_patches": {
+    "0124-nss_core-keep-page-fragment-heads-out-of-reuse-pool.patch": "f65e9f7015d8214417fde20215fe64be061d1ee82bdc62f8ecf70796e015b8b6",
+    "0125-nss_n2h-handle-pbuf-allocation-and-DMA-failures.patch": "a7bc4bb95ddb383755a6c6c40b170e631615d4e5be1b0b0831ba03ae31f4510d"
+  },
+  "private_bdf_sha256": {
+    "lib/firmware/ath11k/IPQ5018/hw1.0/board-2.bin": "3c9a34a4705744873bd5f9b886dea7fdd50f7e8df8eeb210837376c6860fae55",
+    "lib/firmware/ath11k/QCN6122/hw1.0/board-2.bin": "768f50e973c6a99085a607d5fb499be01205e6d35a89c95519e27c7d31098bb3"
+  },
+  "reproducibility": "Public configuration removes the host-specific external toolchain and private unit settings. Not a byte-identical NAND22 image recipe."
+}

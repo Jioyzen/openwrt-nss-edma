@@ -1,0 +1,6 @@
+#!/bin/sh
+# No polling and no packets: react to kernel link/route notifications only.
+/usr/sbin/lyw-led-check
+ip monitor link route | while IFS= read -r line; do
+	/usr/sbin/lyw-led-check
+done

@@ -1,0 +1,51 @@
+From: LYW-30M port <local@localhost>
+Subject: [PATCH] nss: keep fragment-backed skb heads out of the firmware reuse pool
+
+The empty-buffer allocator already avoids shared page-fragment caches.
+The TX reuse path must enforce the same lifetime boundary, otherwise a
+small reused head can still pin a compound fragment page in the firmware.
+Use the existing no-reuse TX path and retain all pool/ring/MTU budgets.
+Expose a read-only rejection counter; this does not count packet drops.
+
+--- a/nss_core.c
++++ b/nss_core.c
+@@ -2725,6 +2725,25 @@
+ }
+ 
+ #if (NSS_SKB_REUSE_SUPPORT == 1)
++/* Reuse transfers an skb into the firmware's long-lived empty-buffer pool.
++ * A fragment head can pin its entire compound page there, even though a new
++ * empty buffer would have used an independently reclaimable kmalloc object.
++ * This counter counts reuse rejections, not dropped packets.
++ */
++static atomic64_t nss_reuse_frag_rejected = ATOMIC64_INIT(0);
++
++static int nss_reuse_frag_rejected_get(char *buffer, const struct kernel_param *kp)
++{
++	return scnprintf(buffer, PAGE_SIZE, "%lld\n",
++			 (long long)atomic64_read(&nss_reuse_frag_rejected));
++}
++
++static const struct kernel_param_ops nss_reuse_frag_rejected_ops = {
++	.get = nss_reuse_frag_rejected_get,
++};
++module_param_cb(skb_reuse_frag_rejected, &nss_reuse_frag_rejected_ops, NULL, 0444);
++MODULE_PARM_DESC(skb_reuse_frag_rejected, "Page-fragment skb reuse rejections (not packet drops)");
++
+ /*
+  * nss_core_skb_can_reuse
+  *	check if skb can be reuse
+@@ -2809,6 +2828,13 @@
+ 	 */
+ 	if (unlikely(nbuf->pp_recycle))
+ 		return false;
++
++	/* Keep fragment-cache heads out of the indefinite firmware pool too. */
++	if (unlikely(nbuf->head_frag)) {
++		atomic64_inc(&nss_reuse_frag_rejected);
++		return false;
++	}
++
+ 
+ 	/*
+ 	 * TODO: This check is only validated on kernel 6.6

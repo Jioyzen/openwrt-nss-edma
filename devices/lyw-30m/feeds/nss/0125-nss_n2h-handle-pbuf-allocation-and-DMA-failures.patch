@@ -1,0 +1,81 @@
+From: LYW-30M port <local@localhost>
+Subject: [PATCH] nss: return pbuf allocation errors and unwind DMA mappings
+
+A low-memory board can fail the first allocation in any extra-pbuf batch.
+Do not BUG the kernel in that case. Reject a failed DMA map before sending
+its address to firmware. Unmap only the unsent or explicitly rejected
+batch before freeing it; ACKed batches remain firmware-owned, and timeout
+ownership remains unresolved until reboot, as before.
+
+---
+--- a/nss_n2h.c
++++ b/nss_n2h.c
+@@ -1193,10 +1193,13 @@
+ 	return NSS_TX_FAILURE;
+ }
+ 
+-static inline void nss_n2h_buf_pool_free(struct nss_n2h_buf_pool *buf_pool)
++static inline void nss_n2h_buf_pool_free(struct nss_ctx_instance *nss_ctx,
++				     struct nss_n2h_buf_pool *buf_pool)
+ {
+ 	int page_count;
+ 	for (page_count = 0; page_count < buf_pool->nss_buf_num_pages; page_count++) {
++		dma_unmap_single(nss_ctx->dev, buf_pool->nss_buf_pool_addr[page_count],
++				 PAGE_SIZE, DMA_TO_DEVICE);
+ 		kfree((void *)buf_pool->nss_buf_pool_vaddr[page_count]);
+ 	}
+ }
+@@ -1234,22 +1237,41 @@
+ 		buf_pool->nss_buf_page_size = PAGE_SIZE;
+ 
+ 		for (page_count = 0; page_count < MAX_PAGES_PER_MSG && num_pages; page_count++, num_pages--) {
++			dma_addr_t dma_addr;
++			bool dma_failed;
+ 			void *kern_addr = kzalloc(PAGE_SIZE, GFP_ATOMIC);
+ 			if (!kern_addr) {
+-				BUG_ON(!page_count);
++				/* No pages in this batch: report allocation failure, not
++				 * a kernel BUG. Earlier ACKed batches remain FW-owned.
++				 */
++				if (!page_count)
++					goto failure;
+ 				break;
+ 			}
+ 
+ 			kmemleak_not_leak(kern_addr);
+ 			buf_pool->nss_buf_pool_vaddr[page_count] = (nss_ptr_t)kern_addr;
+-			buf_pool->nss_buf_pool_addr[page_count] = dma_map_single(nss_ctx->dev, kern_addr, PAGE_SIZE, DMA_TO_DEVICE);
++			/* Check the full DMA address before narrowing to the 32-bit
++			 * firmware ABI, including the DMA_MAPPING_ERROR sentinel.
++			 */
++			dma_addr = dma_map_single(nss_ctx->dev, kern_addr, PAGE_SIZE, DMA_TO_DEVICE);
++			dma_failed = dma_mapping_error(nss_ctx->dev, dma_addr);
++			if (dma_failed || upper_32_bits(dma_addr)) {
++				if (!dma_failed)
++					dma_unmap_single(nss_ctx->dev, dma_addr, PAGE_SIZE, DMA_TO_DEVICE);
++				kfree(kern_addr);
++				buf_pool->nss_buf_num_pages = page_count;
++				nss_n2h_buf_pool_free(nss_ctx, buf_pool);
++				goto failure;
++			}
++			buf_pool->nss_buf_pool_addr[page_count] = dma_addr;
+ 		}
+ 
+ 		buf_pool->nss_buf_num_pages = page_count;
+ 		nss_tx_status = nss_n2h_tx_msg(nss_ctx, &nnm);
+ 		if (nss_tx_status != NSS_TX_SUCCESS) {
+ 
+-			nss_n2h_buf_pool_free(buf_pool);
++			nss_n2h_buf_pool_free(nss_ctx, buf_pool);
+ 			nss_warning("%px: nss_tx error setting pbuf\n", nss_ctx);
+ 			goto failure;
+ 		}
+@@ -1268,7 +1290,7 @@
+ 		 */
+ 		if (NSS_FAILURE == nss_n2h_bufcp[core_num].response) {
+ 
+-			nss_n2h_buf_pool_free(buf_pool);
++			nss_n2h_buf_pool_free(nss_ctx, buf_pool);
+ 			goto failure;
+ 		}
+ 

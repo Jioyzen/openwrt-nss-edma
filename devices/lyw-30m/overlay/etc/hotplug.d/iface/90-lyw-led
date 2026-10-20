@@ -1,0 +1,2 @@
+#!/bin/sh
+[ -x /usr/sbin/lyw-led-check ] && /usr/sbin/lyw-led-check

@@ -1,0 +1,20 @@
+#!/bin/sh
+# A single RAM image supplies off/wired/wifi reboot controls. UCI lives in RAM.
+[ "$(cat /tmp/sysinfo/board_name)" = lingyan,lyw-30m ] || exit 1
+mode=off
+[ ! -e /proc/device-tree/chosen/lingyan,nand-writable ] || mode=wifi
+for token in $(cat /proc/cmdline); do
+ case "$token" in lyw_nss=off|lyw_nss=wired|lyw_nss=wifi) mode=${token#lyw_nss=} ;; esac
+done
+uci set nss.general.topology=dsa
+uci set nss.general.enabled=0
+uci set nss.general.wifi_offload=0
+case "$mode" in
+ wired) uci set nss.general.enabled=1 ;;
+ wifi) uci set nss.general.enabled=1; uci set nss.general.wifi_offload=1 ;;
+esac
+[ ! -x /etc/init.d/qca-nss-drv ] || /etc/init.d/qca-nss-drv disable
+uci commit nss
+printf '%s\n' "$mode" > /tmp/lyw-nss-mode
+logger -t lyw-nss "selected data-plane mode: $mode"
+exit 0

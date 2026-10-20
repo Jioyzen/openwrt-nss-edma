@@ -1,0 +1,8 @@
+#!/bin/sh
+# The unified /etc/init.d/nss service owns NSS bring-up on this board.
+# Drop the disabled vendor init scripts and any stale rc.d links.
+[ -e /etc/init.d/nss ] || exit 0
+rm -f /etc/init.d/qca-nss-drv /etc/init.d/qca-nss-ecm
+rm -f /etc/rc.d/S94qca-nss-drv /etc/rc.d/K94qca-nss-drv
+rm -f /etc/rc.d/S94qca-nss-ecm /etc/rc.d/K94qca-nss-ecm
+exit 0

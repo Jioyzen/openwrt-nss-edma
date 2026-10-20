@@ -1,0 +1,17 @@
+#!/bin/sh
+# Restore the board's two GPIO LEDs after a config-preserving upgrade.
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = 'lingyan,lyw-30m' ] || exit 0
+uci set system.led_power='led'
+uci set system.led_power.name='Power'
+uci set system.led_power.sysfs='red:power'
+uci set system.led_power.trigger='default-on'
+uci set system.led_power.default='1'
+uci set system.led_network='led'
+uci set system.led_network.name='Network'
+uci set system.led_network.sysfs='green:network'
+uci set system.led_network.trigger='none'
+uci set system.led_network.default='0'
+uci -q delete system.led_network.dev
+uci -q delete system.led_network.mode
+uci commit system
+[ ! -x /etc/init.d/led ] || /etc/init.d/led restart

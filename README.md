@@ -1,5 +1,7 @@
 # OpenWrt with NSS hardware offload for IPQ50xx (IPQ5018)
 
+**LYW-30M 专用分支：[来源、构建、私有 BDF 输入与单系统布局说明](README.LYW-30M.md)。**
+
 This is OpenWrt main with Qualcomm NSS hardware offload for IPQ5018
 routers. The NSS firmware runs on top of the upstream `stmmac` ethernet
 driver on kernel 6.18, and the switch keeps its DSA driver. It does not use

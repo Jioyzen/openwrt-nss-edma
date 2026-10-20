@@ -1,0 +1,27 @@
+#!/bin/sh
+G=/sys/class/leds/green:network
+R=/sys/class/leds/red:power
+STATE=/tmp/lyw-internet-state
+
+set_led() {
+	local led=$1 value=$2
+	[ -d "$led" ] || return 0
+	echo none > "$led/trigger" 2>/dev/null
+	echo "$value" > "$led/brightness" 2>/dev/null
+}
+
+if [ "$(cat /sys/class/net/br-lan/carrier 2>/dev/null)" = 1 ] &&
+	ip route show default 2>/dev/null | grep -q '^default '; then
+	set_led "$R" 0
+	set_led "$G" 1
+	now=online
+else
+	set_led "$G" 0
+	set_led "$R" 1
+	now=offline
+fi
+last="$(cat "$STATE" 2>/dev/null)"
+if [ "$now" != "$last" ]; then
+	echo "$now" > "$STATE"
+	logger -t lyw-led "Internet state: $now"
+fi

@@ -1,0 +1,39 @@
+#!/bin/sh
+# Apply China defaults once, while preserving an explicitly customized hostname.
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = 'lingyan,lyw-30m' ] || exit 0
+uci set system.@system[0].timezone='CST-8'
+uci set system.@system[0].zonename='Asia/Shanghai'
+uci set system.@system[0].hostname='LYW-30M'
+uci -q get network.globals >/dev/null || uci set network.globals='globals'
+# LuCI rejects netifd's internal "auto" placeholders. Generate valid values
+# once, using a random /48 ULA and a DUID-UUID (type 0004 + 128 random bits).
+ula="$(uci -q get network.globals.ula_prefix)"
+case "$ula" in
+	auto|'')
+		a="$(hexdump -n1 -v -e '1/1 "%02x"' /dev/urandom)"
+		b="$(hexdump -n2 -v -e '1/2 "%04x"' /dev/urandom)"
+		c="$(hexdump -n2 -v -e '1/2 "%04x"' /dev/urandom)"
+		uci set network.globals.ula_prefix="fd${a}:${b}:${c}::/48"
+		;;
+esac
+duid="$(uci -q get network.globals.dhcp_default_duid)"
+case "$duid" in
+	auto|'')
+		uci set network.globals.dhcp_default_duid="0004$(hexdump -n16 -v -e '16/1 "%02x"' /dev/urandom)"
+		;;
+esac
+uci set network.globals.packet_steering='0'
+uci set luci.main.lang='zh_cn'
+uci set luci.main.mediaurlbase='/luci-static/argon'
+uci set luci.themes.Argon='/luci-static/argon'
+uci -q delete luci.themes.Bootstrap
+uci -q delete luci.themes.BootstrapDark
+uci -q delete luci.themes.BootstrapLight
+uci -q delete system.ntp.server
+uci add_list system.ntp.server='ntp.aliyun.com'
+uci add_list system.ntp.server='ntp.tencent.com'
+uci add_list system.ntp.server='cn.pool.ntp.org'
+uci commit system
+uci commit luci
+uci commit network
+exit 0
