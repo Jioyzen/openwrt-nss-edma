@@ -39,14 +39,14 @@
   pinctrl-names = "default";
 
   led_power: power {
-   label = "green:power";
-   gpios = <&tlmm 23 GPIO_ACTIVE_LOW>;
-   linux,default-trigger = "default-on";
+   label = "red:power";
+   gpios = <&tlmm 23 GPIO_ACTIVE_HIGH>;
+   linux,default-trigger = "none";
   };
 
   led_network: network {
    label = "green:network";
-   gpios = <&tlmm 28 GPIO_ACTIVE_LOW>;
+   gpios = <&tlmm 28 GPIO_ACTIVE_HIGH>;
    linux,default-trigger = "none";
   };
  };
