@@ -53,6 +53,13 @@ apk = \
 
 TARGET_DIR_ORIG := $(TARGET_ROOTFS_DIR)/root.orig-$(BOARD)
 
+# Single-device LYW-30M builds always carry the reviewed source defaults.
+# Explicit local files/ customizations are applied afterwards as usual.
+LYW30M_DEFAULTS_DIR :=
+ifneq ($(filter DEVICE_lingyan_lyw-30m-single DEVICE_lingyan_lyw-30m-ram,$(call qstrip,$(CONFIG_TARGET_PROFILE))),)
+  LYW30M_DEFAULTS_DIR := $(TOPDIR)/devices/lyw-30m/overlay
+endif
+
 ifdef CONFIG_CLEAN_IPKG
   define clean_ipkg
 	-find $(1)/usr/lib/opkg/info -type f -and -not -name '*.control' -delete
@@ -69,6 +76,7 @@ ifdef CONFIG_CLEAN_IPKG
 endif
 
 define prepare_rootfs
+	$(if $(LYW30M_DEFAULTS_DIR),$(call file_copy,$(LYW30M_DEFAULTS_DIR)/.,$(1)))
 	$(if $(2),@if [ -d '$(2)' ]; then \
 		$(call file_copy,$(2)/.,$(1)); \
 	fi)

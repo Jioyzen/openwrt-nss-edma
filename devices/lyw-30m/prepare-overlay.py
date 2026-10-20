@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage reviewed public defaults and explicitly supplied local BDF files."""
+"""Stage local BDF files; source defaults are applied by the image build."""
 import argparse
 import hashlib
 import json
@@ -15,8 +15,7 @@ def main():
     device = Path(__file__).resolve().parent
     root = device.parent.parent
     lock = json.loads((device / 'source-lock.json').read_text())
-    pending = [(p, p.relative_to(device / 'overlay'))
-               for p in sorted((device / 'overlay').rglob('*')) if p.is_file()]
+    pending = []
     for name, original_digest in lock['private_bdf_sha256'].items():
         src = args.private_root / name
         if not src.is_file() or src.stat().st_size == 0:
@@ -34,7 +33,7 @@ def main():
         dst = root / 'files' / relative
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
-    print(f'Staged {len(pending)} files. ART/caldata remains on the router.')
+    print(f'Staged {len(pending)} BDF files. Source defaults load during the build; ART/caldata remains on the router.')
 
 
 if __name__ == '__main__':

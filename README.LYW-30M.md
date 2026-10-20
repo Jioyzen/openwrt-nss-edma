@@ -30,6 +30,8 @@ make -j"$(nproc)"
 
 `prepare-feeds.sh` 固定 packages、LuCI、NSS 三个提交，核对 SHA 并放入两项本机 NSS 修复；不会使用构建主机上的绝对路径。`source-lock.json` 记录来源和补丁校验值。重复执行允许相同补丁，遇到冲突停止。
 
+选中单设备 LYW-30M profile 后，`make` 自动把版本化的 `devices/lyw-30m/overlay/` 加入镜像，并把其内容计入根文件系统缓存校验。无需手工复制初始配置。`prepare-overlay.py` 仅放入本地 BDF；显式放在 `files/` 的自定义文件仍按 OpenWrt 惯例覆盖默认值。多设备批量 profile 不自动套用这套板级默认文件。
+
 `private-bdf-root` 只需包含以下两个从本机原厂数据准备的文件，不能拿其他设备的 ART/caldata 替代：
 
 ```text

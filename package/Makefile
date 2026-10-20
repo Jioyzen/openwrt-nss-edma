@@ -123,9 +123,11 @@ $(shell ( \
 		$(STAGING_DIR_HOST)/bin/tar $(STAGING_DIR_HOST)/bin/gzip \
 		$(if $(CONFIG_USE_MKLIBS),$(SCRIPT_DIR)/rstrip.sh) \
 		$(INCLUDE_DIR)/rootfs.mk $(TOPDIR)/package/Makefile; \
-	[ ! -d $(TOPDIR)/files ] || ( cd $(TOPDIR)/files && \
-		find . -printf '%p %y %m %l\n' | LC_ALL=C sort && \
-		find . -type f -print0 | LC_ALL=C sort -z | xargs -0 -r cat ); \
+	for rootfs_overlay in $(LYW30M_DEFAULTS_DIR) $(TOPDIR)/files; do \
+		[ ! -d "$$rootfs_overlay" ] || ( cd "$$rootfs_overlay" && \
+			find . -printf '%p %y %m %l\n' | LC_ALL=C sort && \
+			find . -type f -print0 | LC_ALL=C sort -z | xargs -0 -r cat ); \
+	done; \
 ) | $(MKHASH) sha256)
 endef
 
