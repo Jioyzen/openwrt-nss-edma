@@ -1,6 +1,6 @@
 # LYW-30M OpenWrt：双频 Wi-Fi 6、NSS 加速与免拆机刷机教程
 
-把中国移动定制的灵焰 **LYW-30M** 改成一台可以自行维护的 OpenWrt 路由器，是这个分支的目标。现在，原厂 Web 开启 SSH、安装专用不死 U-Boot、网页刷入 OpenWrt，以及系统内升级这条流程已经在实机跑通。
+把中国移动定制的岭雁 **LYW-30M** 改成一台可以自行维护的 OpenWrt 路由器，是这个分支的目标。现在，原厂 Web 开启 SSH、安装专用不死 U-Boot、网页刷入 OpenWrt，以及系统内升级这条流程已经在实机跑通。
 
 本项目针对 **AX3000_Q06_V2.0_0223 / IPQ5018 / 256MiB RAM / 128MiB SPI NAND** 做适配。当前发布 **NAND24**：Linux **6.18.55**，NSS Firmware **12.5-210-MP**，双频 ath11k Wi-Fi NSS Offload。系统核心来自 OpenWrt NSS 分支，软件包和 LuCI 使用固定版本的 ImmortalWrt feeds。
 
@@ -38,7 +38,7 @@ NAND24 从闪存启动、双频和 NSS 初始化后的可用内存快照约 **43
 
 | 项目 | 实测配置 |
 |---|---|
-| 设备 / 主板 | 灵焰 LYW-30M / AX3000_Q06_V2.0_0223 |
+| 设备 / 主板 | 岭雁 LYW-30M / AX3000_Q06_V2.0_0223 |
 | SoC | Qualcomm IPQ5018，MP03.3 |
 | 无线 | IPQ5018 内置 2.4GHz；5GHz 芯片丝印 QCN6102，驱动使用 QCN6122 固件目录 |
 | 交换机 | QCA8337 |

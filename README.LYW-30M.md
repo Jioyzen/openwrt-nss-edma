@@ -1,6 +1,6 @@
 # LYW-30M 专用 OpenWrt NSS 分支
 
-本分支维护灵焰 LYW-30M / AX3000_Q06_V2.0_0223 的 IPQ5018、256MiB RAM、128MiB SPI NAND、QCA8337 和双频 ath11k 适配。
+本分支维护岭雁 LYW-30M / AX3000_Q06_V2.0_0223 的 IPQ5018、256MiB RAM、128MiB SPI NAND、QCA8337 和双频 ath11k 适配。
 
 ## 来源与当前设备版本
 
