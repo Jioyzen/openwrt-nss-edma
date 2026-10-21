@@ -19,6 +19,7 @@ LUCI_DESCRIPTION:=Status -> NSS Offload: renders 'nss-status -j' (firmware state
 LUCI_DEPENDS:=+luci-base +TARGET_qualcommax_ipq50xx:nss-tools-dwmac \
 	+!TARGET_qualcommax_ipq50xx:nss-tools
 LUCI_PKGARCH:=all
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0-only
 

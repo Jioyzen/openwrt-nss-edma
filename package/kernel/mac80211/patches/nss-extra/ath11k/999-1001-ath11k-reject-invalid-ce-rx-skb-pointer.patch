@@ -1,0 +1,33 @@
+From: LYW-30M local development <local@localhost>
+Subject: ath11k: reject invalid CE RX skb pointers
+
+--- a/drivers/net/wireless/ath/ath11k/ce.c
++++ b/drivers/net/wireless/ath/ath11k/ce.c
+@@ -4,8 +4,9 @@
+  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+  */
+ 
+ #include <linux/export.h>
++#include <linux/mm.h>
+ #include "dp_rx.h"
+ #include "debug.h"
+ #include "hif.h"
+ 
+@@ -413,8 +414,17 @@
+ 	sw_index = CE_RING_IDX_INCR(nentries_mask, sw_index);
+ 	pipe->dest_ring->sw_index = sw_index;
+ 
+ 	pipe->rx_buf_needed++;
++
++	if (unlikely(!*skb || !virt_addr_valid(*skb))) {
++		ath11k_warn(ab, "invalid skb pointer in CE RX ring %u: %px\n",
++			    pipe->pipe_num, *skb);
++		*skb = NULL;
++		ret = -EFAULT;
++		goto err;
++	}
++
+ err:
+ 	ath11k_hal_srng_access_end(ab, srng);
+ 
+ 	spin_unlock_bh(&srng->lock);

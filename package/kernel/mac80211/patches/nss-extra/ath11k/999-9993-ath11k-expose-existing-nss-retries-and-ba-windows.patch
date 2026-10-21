@@ -1,0 +1,104 @@
+From: LYW-30M local development <local@localhost>
+Subject: [PATCH] ath11k: expose existing NSS retry counters and host BA windows
+
+Read-only development diagnostics without enabling optional per-peer RX
+histograms. core_lock excludes teardown and RCU/base_lock protect peers,
+RX TIDs and the existing NSS counters. No wire messages, RX budgets,
+or background polling are changed. Windows are explicitly host state.
+
+--- a/drivers/net/wireless/ath/ath11k/debugfs.c
++++ b/drivers/net/wireless/ath/ath11k/debugfs.c
+@@ -17,6 +17,7 @@
+ #include "debugfs_htt_stats.h"
+ #include "hif.h"
+ #include "qmi.h"
++#include "peer.h"
+ 
+ static const char *htt_bp_umac_ring[HTT_SW_UMAC_RING_IDX_MAX] = {
+ 	"REO2SW1_RING",
+@@ -860,6 +861,74 @@
+ 
+ DEFINE_SHOW_ATTRIBUTE(ath11k_debugfs_memory_inventory);
+ 
++#ifdef CPTCFG_ATH11K_NSS_SUPPORT
++/* Reuse existing counters: no per-station histogram allocation or polling. */
++static int ath11k_debugfs_nss_rx_diagnostics_show(struct seq_file *s, void *unused)
++{
++	struct ath11k_base *ab = s->private;
++	struct ath11k_peer *peer;
++	struct ath11k *ar;
++	struct peer_stats *stats;
++	struct ath11k_sta *arsta;
++	struct dp_rx_tid *tid;
++	int i, r;
++
++	mutex_lock(&ab->core_lock);
++	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ab->dev_flags) ||
++	    test_bit(ATH11K_FLAG_UNREGISTERING, &ab->dev_flags)) {
++		mutex_unlock(&ab->core_lock);
++		return -ENETDOWN;
++	}
++
++	seq_printf(s, "nss_enabled=%u stats_enabled=%u\n",
++		   ab->nss.enabled, ab->nss.stats_enabled);
++	seq_puts(s, "BA windows are host configuration, not hardware readback; retry counters have distinct units.\n");
++
++	rcu_read_lock();
++	spin_lock_bh(&ab->base_lock);
++	for (r = 0; r < ab->num_radios; r++) {
++		ar = ab->pdevs[r].ar;
++		if (!ar)
++			continue;
++		list_for_each_entry(peer, &ar->peers, list) {
++			if (!peer->sta || !peer->nss.nss_stats)
++				continue;
++			arsta = ath11k_sta_to_arsta(peer->sta);
++			stats = peer->nss.nss_stats;
++			seq_printf(s, "peer=%d vdev=%d mac=%pM rx_histograms=%u rssi_raw=%u avg_rssi_raw=%lu\n",
++				   peer->peer_id, peer->vdev_id, peer->addr,
++				   !!arsta->rx_stats, arsta->rssi_comb,
++				   ewma_avg_rssi_read(&arsta->avg_rssi));
++			seq_printf(s, "tx_packets=%u tx_bytes=%llu tx_retries=%u tx_failed=%u\n",
++				   stats->tx_packets, stats->tx_bytes,
++				   stats->tx_retries, stats->tx_failed);
++			seq_printf(s, "tx_failed_retries=%u tx_multiple_retries=%u tx_mpdu_retries=%u tx_mpdu_total_retries=%u\n",
++				   stats->tx_failed_retries, stats->tx_multiple_retries,
++				   stats->tx_mpdu_retries, stats->tx_mpdu_total_retries);
++			seq_printf(s, "rx_packets=%u rx_bytes=%llu rx_retries=%u rx_mic_err=%u rx_decrypt_err=%u\n",
++				   stats->rx_packets, stats->rx_bytes, stats->rx_retries,
++				   stats->rx_mic_err, stats->rx_decrypt_err);
++			for (i = 0; i <= IEEE80211_NUM_TIDS; i++) {
++				tid = &peer->rx_tid[i];
++				if (tid->active)
++					seq_printf(s, "tid=%u ba_window=%u descriptor_bytes=%u\n",
++						   i, tid->ba_win_sz, tid->size);
++			}
++			if (seq_has_overflowed(s))
++				break;
++		}
++		if (seq_has_overflowed(s))
++			break;
++	}
++	spin_unlock_bh(&ab->base_lock);
++	rcu_read_unlock();
++	mutex_unlock(&ab->core_lock);
++	return 0;
++}
++
++DEFINE_SHOW_ATTRIBUTE(ath11k_debugfs_nss_rx_diagnostics);
++#endif
++
+ static ssize_t ath11k_write_fw_dbglog(struct file *file,
+ 				      const char __user *user_buf,
+ 				      size_t count, loff_t *ppos)
+@@ -1066,6 +1135,10 @@
+ 
+ 	debugfs_create_file("memory_inventory", 0400, ab->debugfs_soc, ab,
+ 			    &ath11k_debugfs_memory_inventory_fops);
++#ifdef CPTCFG_ATH11K_NSS_SUPPORT
++	debugfs_create_file("nss_rx_diagnostics", 0400, ab->debugfs_soc, ab,
++			    &ath11k_debugfs_nss_rx_diagnostics_fops);
++#endif
+ 
+ 	if (ab->hw_params.sram_dump.start != 0)
+ 		debugfs_create_file("sram", 0400, ab->debugfs_soc, ab,

@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nss-tools
-PKG_RELEASE:=21
+PKG_RELEASE:=22
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -54,12 +54,23 @@ define Package/nss-tools-dwmac
 	+kmod-qca-nss-ecm +kmod-qca-nss-drv-vlan-mgr +kmod-qca-nss-drv-pppoe \
 	+TARGET_qualcommax_ipq50xx:kmod-qca8337-nss \
 	+NSS_TOOLS_DWMAC_RTL8367S:kmod-rtl8367s-nss \
-	+TARGET_qualcommax_ipq50xx:kmod-qca-dsa-nss +ip-full
+	+TARGET_qualcommax_ipq50xx:kmod-qca-dsa-nss \
+	+NSS_TOOLS_DWMAC_MINIMAL_IP:ip-tiny +!NSS_TOOLS_DWMAC_MINIMAL_IP:ip-full
   CONFLICTS:=nss-tools
   PKGARCH:=all
 endef
 
 define Package/nss-tools-dwmac/config
+  config NSS_TOOLS_DWMAC_MINIMAL_IP
+    bool "Use ip-tiny for basic router operation"
+    depends on PACKAGE_nss-tools-dwmac
+    default n
+    help
+      Use iproute2 without BPF/ELF support and advanced tunnel commands.
+      Address, route, link, VLAN and monitor commands used by the NSS
+      startup scripts remain available. Keep disabled if other local
+      scripts need the full iproute2 command set.
+
   config NSS_TOOLS_DWMAC_RTL8367S
     bool "Include the optional RTL8367S legacy switch module"
     depends on PACKAGE_nss-tools-dwmac

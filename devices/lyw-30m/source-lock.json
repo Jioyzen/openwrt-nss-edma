@@ -1,6 +1,6 @@
 {
   "board": "LYW-30M AX3000_Q06_V2.0_0223",
-  "firmware_label": "NAND23",
+  "firmware_label": "NAND24",
   "kernel": "6.18.55",
   "nss_firmware": "12.5-210-MP",
   "nss_reserved_mib": 16,
@@ -24,19 +24,64 @@
       "commit": "a8e0e5cc073eb5d832dae84c7fcdd514078f7957"
     }
   },
-  "nss_local_commit": "c6630e394aa9d7029ef4929a87229a558b69c2e3",
+  "nss_local_commit": "a8e0e5cc073eb5d832dae84c7fcdd514078f7957",
   "nss_patches": {
     "0124-nss_core-keep-page-fragment-heads-out-of-reuse-pool.patch": "f65e9f7015d8214417fde20215fe64be061d1ee82bdc62f8ecf70796e015b8b6",
-    "0125-nss_n2h-handle-pbuf-allocation-and-DMA-failures.patch": "a7bc4bb95ddb383755a6c6c40b170e631615d4e5be1b0b0831ba03ae31f4510d"
+    "0125-nss_n2h-handle-pbuf-allocation-and-DMA-failures.patch": "a7bc4bb95ddb383755a6c6c40b170e631615d4e5be1b0b0831ba03ae31f4510d",
+    "0147-nss_core-read-the-memory-counters-without-si_meminfo-in-softirq.patch": "bb5d7aded85ad71cf4e154c62eece972ea94787e59c117195fcd2dce5acc2747",
+    "0148-nss_wifili-bound-peer-statistics-by-the-receive-buffer.patch": "2164efcc478b247cfb56157398545bacad155b99772eef9c1f8e01e768b33cfb",
+    "qca-nss-clients/patches/0055-nss_qdisc-initialise-the-stats-hash-table-lock.patch": "3c3a8aae19c2338785812be1beb2cbc9dec2e14d3be3cd934382a502a9c45b74"
   },
   "private_bdf_sha256": {
     "lib/firmware/ath11k/IPQ5018/hw1.0/board-2.bin": "3c9a34a4705744873bd5f9b886dea7fdd50f7e8df8eeb210837376c6860fae55",
     "lib/firmware/ath11k/QCN6122/hw1.0/board-2.bin": "768f50e973c6a99085a607d5fb499be01205e6d35a89c95519e27c7d31098bb3"
   },
-  "reproducibility": "Public configuration uses the source-built toolchain and excludes unit data. NAND23 source defaults and installation were verified; the installed binary used the existing build toolchain, so byte-identical reconstruction is not claimed.",
+  "reproducibility": "Pinned sources, device defaults, board-only kernel exclusions and full NAND24 config are versioned. Per-unit BDF/ART and runtime settings stay private; binary/source identity is recorded in the build manifest.",
   "validated_NAND22_baseline": {
     "firmware_label": "NAND22",
     "installed_image_commit": "c1b1c67a80ebb4350565f3e3f3c00a94f6683671"
   },
-  "installed_image_manifest": "builds/nand23-source-defaults.json"
+  "installed_image_manifest": "builds/nand24.json",
+  "local_development": {
+    "baseline": "RAM34",
+    "candidate": "NAND24 from user-throughput-validated RAM34",
+    "NAND_untouched": true,
+    "upstream_fixes": [
+      "51680ad76994b884aa9d64e92f4cf7c50a91d7b5",
+      "833cbdeb45d02d4b9a435c7d18f91be01d47b22a",
+      "a915ef7f2d3f1500f455ed9e4721c0490349fe66",
+      "634e90fd0657b60478de23adb44703f37846e9d7",
+      "9dd62f962a0fc97282906adb0b40673b036fbb3a",
+      "5344fc35d79fc947b501e9feee5ced2b07c664fa"
+    ],
+    "not_yet_validated": true,
+    "parent": "NAND23",
+    "source_default_rx_desc_override": 2048,
+    "private_RAM_image_QCN6122_rx_desc_override": 2048,
+    "RAM18_startup_and_reload_passed": true,
+    "RAM19_owner_throughput_normal": true,
+    "RAM19_rx_descriptor_failure_persists": true,
+    "RAM20_owner_throughput_normal": true,
+    "RAM20_RSSI_still_uninitialized": true,
+    "RAM22_AFC_request_size_verified": 8192,
+    "RAM22_AFC_address": "0x4dfd8000",
+    "slab_max_order": 3,
+    "RAM25_owner_throughput_no_obvious_change": true,
+    "RAM26_recovery_failed": true,
+    "nss_patch_1000_sha256": "165102b84ce169e96659c40d4cf6af83ed035cdd25ab099d88271eb5b889ec44",
+    "nss_patch_1001_sha256": "4e1052fad57ba87079b2b06a0bd9c35b1cb6eeb571ae23b1f2236f7e1ae36ffb",
+    "recovery_patch_sources": [
+      "https://lkml.rescloud.iu.edu/2610.2/05225.html",
+      "https://lkml.rescloud.iu.edu/2610.2/05228.html"
+    ],
+    "RAM33_patch_sha256": {
+      "999-9997-ath11k-initialize-ce-waitqueues-once.patch": "67db3e264c25b162eade0a1522eb88f8a57b392b5f2859736161eb4c8245c028",
+      "999-9998-ath11k-keep-crash-flush-until-rings-rebuilt.patch": "770c80a36ce2ae06d911948c32f27a35b4dfbb2e67cbf923bd0a4bad45a2df51",
+      "999-9999-ath11k-unlock-unready-ce-rx-ring-without-access-end.patch": "d13c0721a5fa3ecad37941f93e43f459b8e03d07dbd7c1982eaf596e2dead1dd"
+    },
+    "RAM33_deferred_not_applied": true,
+    "hardware_trim_fragment": "devices/lyw-30m/kernel-no-external-io.config",
+    "hardware_trim_single_LYW_profile_only": true,
+    "RAM34_owner_throughput_normal": true
+  }
 }

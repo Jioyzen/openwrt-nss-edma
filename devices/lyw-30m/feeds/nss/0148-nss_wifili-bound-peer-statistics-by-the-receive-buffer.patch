@@ -1,0 +1,58 @@
+From: LYW-30M local development <local@localhost>
+Subject: [PATCH] nss_wifili: bound peer statistics by the receive buffer
+
+ath11k iterates npeers from a variable-length firmware statistics message.
+The existing upper bound on cm.len neither validates the number of entries
+nor rejects a truncated payload. Reuse the core's actual contiguous RX
+buffer length, as conn_sync_many already does. Avoid multiplication overflow,
+accept valid multi-peer batches, and reject malformed batches before the
+registered callback. No wire ABI, ring or packet memory budget changes.
+This is a defensive fix, not an observed RX descriptor allocator root cause.
+
+--- a/nss_wifili.c
++++ b/nss_wifili.c
+@@ -88,6 +88,21 @@
+  */
+ static struct nss_wifili_thread_scheme_db ts_db[NSS_MAX_CORES];
+ 
++/* The peer array is variable-length despite the legacy wpcs[1] declaration.
++ * Check the actual RX payload, not cm.len (which can retain the request size).
++ * Reject a partial batch before either the count or any peer entry is read.
++ */
++static bool nss_wifili_peer_stats_valid(const struct nss_wifili_peer_stats *stats,
++                                      uint32_t bytes)
++{
++	uint32_t header = offsetof(struct nss_wifili_peer_stats, wpcs);
++
++	if (bytes < header)
++		return false;
++
++	return stats->npeers <= (bytes - header) / sizeof(stats->wpcs[0]);
++}
++
+ /*
+  * nss_wifili_handler()
+  *	Handle NSS -> HLOS messages for wifi
+@@ -107,6 +122,22 @@
+ 		|| ((ncm->interface != NSS_WIFILI_INTERNAL_INTERFACE)
+ 		&& (ncm->interface != NSS_WIFILI_EXTERNAL_INTERFACE0)
+ 		&& (ncm->interface != NSS_WIFILI_EXTERNAL_INTERFACE1)));
++
++	/* The core supplied the contiguous buffer length before this callback.
++	 * Validate before passing a variable peer batch to ath11k's iterator.
++	 */
++	if (ncm->type == NSS_WIFILI_PEER_STATS_MSG &&
++	    ncm->response != NSS_CMN_RESPONSE_EMSG) {
++		uint32_t offset = offsetof(struct nss_wifili_msg, msg.peer_stats.stats);
++		uint32_t bytes = nss_ctx->rx_msg_buf_len;
++
++		if (bytes < offset ||
++		    !nss_wifili_peer_stats_valid(&ntm->msg.peer_stats.stats, bytes - offset)) {
++			pr_warn_ratelimited("%px: rejecting truncated wifili peer statistics (buffer %u)\n",
++					    nss_ctx, bytes);
++			return;
++		}
++	}
+ 
+ 	/*
+ 	 * Trace messages.

@@ -1,0 +1,30 @@
+From: LYW-30M local development <local@localhost>
+Subject: ath11k: guard CE RX ring access after firmware recovery
+
+The CE TX completion path already rejects a cleared source ring when
+recovery races a completion callback. Apply the same check to the CE
+destination path before ath11k_hal_srng_dst_get_next_entry(). During
+firmware crash teardown hal_srng_clear() can remove the destination tail
+pointer while a late callback is still being serviced. Treat that as an
+empty/error receive and let the existing replenish path rebuild buffers.
+No ring sizes, skb allocation policy, firmware ABI or normal data path is
+changed.
+
+--- a/drivers/net/wireless/ath/ath11k/ce.c
++++ b/drivers/net/wireless/ath/ath11k/ce.c
+@@ -418,6 +418,16 @@ static int ath11k_ce_completed_recv_next(struct ath11k_ce_pipe *pipe,
+	srng = &ab->hal.srng_list[pipe->status_ring->hal_ring_id];
+ 
+	spin_lock_bh(&srng->lock);
+ 
++	/*
++	 * Recovery can clear a destination ring while a late CE callback is
++	 * being serviced. The TX completion path has the same guard for its
++	 * source ring. Do not dereference the cleared tail pointer.
++	 */
++	if (unlikely(!srng->u.dst_ring.tp_addr)) {
++		ret = -EIO;
++		goto err;
++	}
++
+ 	ath11k_hal_srng_access_begin(ab, srng);

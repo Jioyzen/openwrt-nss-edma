@@ -6,5 +6,5 @@ UBI_START=0x900000
 UBI_SIZE=0x7700000
 RUNTIME=NAND
 NAND_POLICY=rootfs-writable-other15-read-only
-BUILD=nss618-nand23
+BUILD=nss618-nand24
 DEFAULTS=router-open-wifi-v1

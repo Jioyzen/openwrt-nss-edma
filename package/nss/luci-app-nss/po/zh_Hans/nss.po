@@ -1,0 +1,188 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\nLanguage: zh_Hans\nPlural-Forms: nplurals=1; plural=0;\n"
+
+msgid "%s IPv4 / %s IPv6 / %s multicast"
+msgstr "IPv4 %s / IPv6 %s / 组播 %s"
+
+msgid "%s pkts/s (NSS→host)"
+msgstr "%s 包/秒（NSS → 主机）"
+
+msgid "Active through DSA VLAN nodes"
+msgstr "已通过 DSA VLAN 节点启用"
+
+msgid "Bridge offload"
+msgstr "桥接卸载"
+
+msgid "CPU temperature"
+msgstr "CPU 温度"
+
+msgid "ECM accelerated connections"
+msgstr "ECM 加速连接数"
+
+msgid "ECM not loaded"
+msgstr "ECM 未加载"
+
+msgid "Each standalone switch port reaches the firmware as its own VLAN node on the GMAC above. A bridge has one node that all its switch ports share, and a VLAN-aware bridge has one for each of its VLANs."
+msgstr "独立交换机端口通过各自的 VLAN 节点接入 NSS 固件；同一桥中的端口共用一个节点，启用 VLAN 过滤的桥则为每个 VLAN 建立节点。"
+
+msgid "Fast lane"
+msgstr "优先通道"
+
+msgid "Firmware"
+msgstr "固件"
+
+msgid "Firmware-attached ports"
+msgstr "接入 NSS 固件的端口"
+
+msgid "Grant access to the NSS offload status page"
+msgstr "允许查看 NSS 卸载状态页"
+
+msgid "Heartbeat"
+msgstr "心跳"
+
+msgid "Host stack (NSS plane not armed)"
+msgstr "主机转发（NSS 数据面未启用）"
+
+msgid "Link"
+msgstr "链路"
+
+msgid "NSS Offload"
+msgstr "NSS 加速"
+
+msgid "NSS core %s load"
+msgstr "NSS 核心 %s 负载"
+
+msgid "NSS core load"
+msgstr "NSS 核心负载"
+
+msgid "NSS firmware heartbeat is silent; check the system log"
+msgstr "NSS 固件无心跳，请检查系统日志"
+
+msgid "NSS offload active (wifili)"
+msgstr "NSS 无线卸载已启用（wifili）"
+
+msgid "NSS offload active (wifili, 802.11s mesh offloaded)"
+msgstr "NSS 无线卸载已启用（wifili，802.11s Mesh 已卸载）"
+
+msgid "NSS temperature"
+msgstr "NSS 温度"
+
+msgid "No ports attached — host stack"
+msgstr "无接入端口，使用主机转发"
+
+msgid "Node"
+msgstr "节点"
+
+msgid "Offload active"
+msgstr "加速已启用"
+
+msgid "Offloaded packets are forwarded by the firmware and never reach the host. \"via host\" / \"to host\" is the host↔firmware exception path — what was not offloaded — so low numbers there mean offload is working. Broadcast and multicast discovery, connection setup, short-lived flows and traffic addressed to the router itself always take that path: a flow is only offloaded once it is established, so a quiet port that carries little else shows a low offloaded share. Port totals are on Status → Overview."
+msgstr "已卸载的数据包由 NSS 固件直接转发。经主机发送或接收的计数表示交由主机处理的流量。广播、组播发现、连接建立、短连接以及访问路由器本机的流量会经过主机路径；连接建立后才可能被加速，因此空闲或以管理流量为主的端口，其卸载比例较低属于正常情况。端口总流量可在“状态 → 概览”中查看。"
+
+msgid "Other SoC temperature"
+msgstr "SoC 其他区域温度"
+
+msgid "PPPoE manager"
+msgstr "PPPoE 管理模块"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "RX offloaded"
+msgstr "接收卸载包数"
+
+msgid "RX packets"
+msgstr "接收包数"
+
+msgid "RX to host"
+msgstr "交由主机接收"
+
+msgid "SQM shaper"
+msgstr "SQM 流量整形"
+
+msgid "Started"
+msgstr "已启动"
+
+msgid "Switch ports"
+msgstr "交换机端口"
+
+msgid "Switch ports and bridges on the firmware (DSA)"
+msgstr "NSS 固件中的交换机端口和桥（DSA）"
+
+msgid "TX offloaded"
+msgstr "发送卸载包数"
+
+msgid "TX packets"
+msgstr "发送包数"
+
+msgid "TX via host"
+msgstr "经主机发送"
+
+msgid "The offloaded share is part of the GMAC's figures above; the totals here are each port's own switch counters, all its VLANs together."
+msgstr "卸载流量包含在上方 GMAC 统计中；此处是交换机各端口的总计数，包含该端口的所有 VLAN。"
+
+msgid "Wi-Fi data path"
+msgstr "Wi-Fi 数据路径"
+
+msgid "Wi-Fi temperature"
+msgstr "Wi-Fi 温度"
+
+msgid "ath11k not loaded"
+msgstr "ath11k 未加载"
+
+msgid "avg"
+msgstr "平均"
+
+msgid "down"
+msgstr "断开"
+
+msgid "egress %s pkts / ingress %s pkts — %s marking rules"
+msgstr "出站 %s 包 / 入站 %s 包，共 %s 条标记规则"
+
+msgid "host mode"
+msgstr "主机转发模式"
+
+msgid "host mode (mesh configured; firmware supports mesh offload)"
+msgstr "主机转发模式（已配置 Mesh，固件支持 Mesh 卸载）"
+
+msgid "host mode (mesh configured; this NSS firmware has no mesh offload)"
+msgstr "主机转发模式（已配置 Mesh，当前 NSS 固件不支持 Mesh 卸载）"
+
+msgid "loaded"
+msgstr "已加载"
+
+msgid "max"
+msgstr "最高"
+
+msgid "min"
+msgstr "最低"
+
+msgid "no"
+msgstr "否"
+
+msgid "no NSS shaper"
+msgstr "未使用 NSS 整形"
+
+msgid "no NSS shaper on %s"
+msgstr "%s 未使用 NSS 整形"
+
+msgid "not loaded"
+msgstr "未加载"
+
+msgid "nsstbl on %s"
+msgstr "%s 上的 nsstbl"
+
+msgid "nsstbl on %s (a lane on the switch conduit %s)"
+msgstr "%s 上的 nsstbl（交换机 CPU 接口 %s 的通道）"
+
+msgid "up"
+msgstr "已连接"
+
+msgid "upload IGS: %s"
+msgstr "上传 IGS：%s"
+
+msgid "yes"
+msgstr "是"
+
+msgid "off (no queue enabled in /etc/config/sqm)"
+msgstr "已关闭（未启用 SQM 队列）"

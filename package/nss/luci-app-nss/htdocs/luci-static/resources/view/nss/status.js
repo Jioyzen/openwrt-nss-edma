@@ -18,7 +18,7 @@ function getStatus() {
 function stateBadge(state) {
 	var map = {
 		active:  ['#2e7d32', _('Offload active')],
-		stalled: ['#c62828', _('Firmware armed but heartbeat silent — check the system log; a reboot returns to the host stack')],
+		stalled: ['#c62828', _('NSS firmware heartbeat is silent; check the system log')],
 		host:    ['#f9a825', _('Host stack (NSS plane not armed)')]
 	};
 	var m = map[state] || ['#757575', state];
@@ -133,7 +133,8 @@ function renderStatus(d) {
 			row(_('ECM accelerated connections'), d.ecm.loaded
 				? _('%s IPv4 / %s IPv6 / %s multicast').format(d.ecm.ipv4_accel, d.ecm.ipv6_accel, d.ecm.multicast_accel)
 				: _('ECM not loaded')),
-			row(_('Bridge offload (bridge-mgr)'), onoff(d.modules.bridge_mgr)),
+			row(_('Bridge offload'), d.glue === 'dwmac' && (d.dsa_nodes || []).length
+				? _('Active through DSA VLAN nodes') : onoff(d.modules.bridge_mgr)),
 			row(_('PPPoE manager'), onoff(d.modules.pppoe)),
 			row(_('Wi-Fi data path'), wifi),
 			row(_('SQM shaper'), d.sqm.active
@@ -141,7 +142,9 @@ function renderStatus(d) {
 					? _('nsstbl on %s (a lane on the switch conduit %s)').format(d.sqm.device, d.sqm.shaping_device)
 					: _('nsstbl on %s').format(d.sqm.device)) +
 					(igs ? ' — ' + _('upload IGS: %s').format(igs) : '')
-				: (d.sqm.device ? _('no NSS shaper on %s').format(d.sqm.device) : _('no NSS shaper'))),
+				: !d.sqm.enabled
+					? _('off (no queue enabled in /etc/config/sqm)')
+					: (d.sqm.device ? _('no NSS shaper on %s').format(d.sqm.device) : _('no NSS shaper'))),
 			(d.sqm.fastlane && d.sqm.fastlane.active)
 				? row(_('Fast lane'), _('egress %s pkts / ingress %s pkts — %s marking rules').format(
 					d.sqm.fastlane.egress_pkts, d.sqm.fastlane.ingress_pkts, d.sqm.qos_marking_rules || 0))

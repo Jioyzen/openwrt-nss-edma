@@ -1,0 +1,39 @@
+# Candidate lean profile for LYW-30M NSS125. Append after the reviewed
+# lyw-30m-nand22-public.config, then run make defconfig.
+# Keep standard routing, PPPoE, IPv6, firewall4, ath11k and NSS.
+# Remove UI/debug/advanced protocol support that is not part of this router's
+# tested runtime. This fragment is a candidate until a new image is tested.
+# Keep the package-manager page requested for basic router maintenance.
+CONFIG_PACKAGE_luci-app-package-manager=y
+CONFIG_PACKAGE_luci-i18n-package-manager-zh-cn=y
+# Read-only NSS status and overview integration, without an extra daemon.
+CONFIG_PACKAGE_luci-app-nss=y
+CONFIG_PACKAGE_luci-i18n-nss-zh-cn=y
+# NSS startup and the LED event listener only need basic iproute2 commands.
+CONFIG_NSS_TOOLS_DWMAC_MINIMAL_IP=y
+CONFIG_PACKAGE_ip-tiny=y
+# CONFIG_PACKAGE_ip-full is not set
+# CONFIG_PACKAGE_libbpf is not set
+# CONFIG_PACKAGE_libelf is not set
+# Keep ath11k/NSS diagnostics while validating the candidate.
+CONFIG_PACKAGE_MAC80211_DEBUGFS=y
+# CONFIG_ATH11K_DEBUGFS_STA is not set
+# CONFIG_ATH11K_DEBUGFS_HTT_STATS is not set
+# CONFIG_PACKAGE_MAC80211_MESH is not set
+# CONFIG_PACKAGE_kmod-macvlan is not set
+# CONFIG_PACKAGE_kmod-mppe is not set
+# CONFIG_PACKAGE_kmod-nft-fullcone is not set
+# CONFIG_PACKAGE_shellsync is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Server is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Geoview is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray is not set
+# CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-webui is not set
+# CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-ng is not set
+# CONFIG_PACKAGE_knot-resolver_dnstap is not set
+# No cellular/raw-IP WAN hardware: keep Ethernet/PPPoE/IPv6/Wi-Fi offload.
+# CONFIG_NSS_DRV_RMNET_ENABLE is not set

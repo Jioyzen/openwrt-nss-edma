@@ -1,0 +1,26 @@
+From: LYW-30M local development <local@localhost>
+Subject: [PATCH] ath11k: update basic RSSI without optional RX statistics
+
+The small-memory build does not allocate arsta->rx_stats. Returning before
+updating the basic RSSI also leaves the EWMA empty: station dumps then
+report the noise floor as signal_avg. Update the two existing scalar
+statistics before the optional histogram check; do not allocate RX stats.
+
+--- a/drivers/net/wireless/ath/ath11k/dp_rx.c
++++ b/drivers/net/wireless/ath/ath11k/dp_rx.c
+@@ -3550,11 +3550,12 @@
+ 	u32 num_msdu;
+ 	int i;
+ 
++	/* Basic station RSSI must not depend on optional RX histograms. */
++	arsta->rssi_comb = ppdu_info->rssi_comb;
++	ewma_avg_rssi_add(&arsta->avg_rssi, ppdu_info->rssi_comb);
++
+ 	if (!rx_stats)
+ 		return;
+-
+-	arsta->rssi_comb = ppdu_info->rssi_comb;
+-	ewma_avg_rssi_add(&arsta->avg_rssi, ppdu_info->rssi_comb);
+ 
+ 	if (!ath11k_debugfs_is_extd_rx_stats_enabled(ar))
+ 		return;

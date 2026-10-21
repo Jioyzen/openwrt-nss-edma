@@ -18,7 +18,7 @@ case "$FIRMWARE" in
 	case "$board" in
 	lingyan,lyw-30m)
 		caldata_extract "0:ART" 0x1000 0x20000
-		wlan_mac=$(mtd_get_mac_binary 0:ART 12)
+		wlan_mac=$(get_mac_binary "$(find_mtd_chardev 0:ART)" 12)
 		ath11k_patch_mac $wlan_mac 0
 		ath11k_set_macflag
 		;;
@@ -131,7 +131,7 @@ case "$FIRMWARE" in
 	case "$board" in
 	lingyan,lyw-30m)
 		caldata_extract "0:ART" 0x26800 0x20000
-		wlan_mac=$(mtd_get_mac_binary 0:ART 18)
+		wlan_mac=$(get_mac_binary "$(find_mtd_chardev 0:ART)" 18)
 		ath11k_patch_mac $wlan_mac 0
 		ath11k_set_macflag
 		;;

@@ -1,0 +1,107 @@
+From: LYW-30M local development <local@localhost>
+Subject: [PATCH] ath11k: handle the bounded QCN6122 AFC memory request
+
+QSDK 12.5 cnss defines type 10 as AFC and puts QCN6122's two 4 KiB
+slots at m3-dump + 0xd8000. Honour only that hardware, exact size and
+bounded existing named reservation. Zero the mapped slots before sending
+their address, reuse it on QMI reconnect, and release through the existing fixed-memory iounmap path.
+Unsupported requests remain explicitly logged and omitted as before.
+Do not change DTS, reserved-memory totals or packet-buffer budgets.
+
+Reference: everything411/qsdk@dac37512ed1ade67e3d26cfef5932f5cba310e6a
+qca/src/qca-cnss/{ahb/ahb.c,cnss_common/cnss_common.h}
+
+--- a/drivers/net/wireless/ath/ath11k/qmi.h
++++ b/drivers/net/wireless/ath/ath11k/qmi.h
+@@ -169,6 +169,9 @@
+ #define M3_DUMP_REGION_TYPE				0x3
+ #define CALDB_MEM_REGION_TYPE				0x4
+ #define PAGEABLE_MEM_REGION_TYPE			0x9
++#define AFC_MEM_REGION_TYPE				0xa
++#define ATH11K_QCN6122_AFC_OFFSET			0xd8000
++#define ATH11K_QCN6122_AFC_SIZE			0x2000
+ 
+ struct qmi_wlanfw_host_cap_req_msg_v01 {
+ 	u8 num_clients_valid;
+--- a/drivers/net/wireless/ath/ath11k/qmi.c
++++ b/drivers/net/wireless/ath/ath11k/qmi.c
+@@ -2074,6 +2074,56 @@
+ 		return ret;
+ 	}
+ 
++	return 0;
++}
++
++/* QSDK 12.5 cnss AHB keeps QCN6122's two AFC slots inside m3-dump.
++ * This is not a packet-buffer allocation and requires no extra reservation.
++ * Reject different hardware/layouts before mapping or clearing any memory.
++ */
++static int ath11k_qmi_qcn6122_assign_afc(struct ath11k_base *ab,
++				      struct target_mem_chunk *chunk, u32 size)
++{
++	struct resource res;
++	void __iomem *addr;
++	int ret;
++
++	if (ab->hw_rev != ATH11K_HW_QCN6122_HW10)
++		return -EOPNOTSUPP;
++	if (size != ATH11K_QCN6122_AFC_SIZE)
++		return -EINVAL;
++
++	ret = ath11k_qmi_reserved_memory_to_resource(ab, M3_DUMP_REGION_TYPE, &res);
++	if (ret)
++		return ret;
++	if (resource_size(&res) < ATH11K_QCN6122_AFC_OFFSET ||
++	    resource_size(&res) - ATH11K_QCN6122_AFC_OFFSET < size ||
++	    res.start > U32_MAX - ATH11K_QCN6122_AFC_OFFSET - size)
++		return -ERANGE;
++
++	/* QMI reconnects after a firmware restart without tearing down this
++	 * fixed-memory mapping. Reuse only our exact previous AFC mapping.
++	 */
++	if (chunk->iaddr) {
++		if (chunk->prev_type != AFC_MEM_REGION_TYPE ||
++		    chunk->prev_size != size ||
++		    chunk->paddr != res.start + ATH11K_QCN6122_AFC_OFFSET)
++			return -EBUSY;
++		addr = chunk->iaddr;
++	} else {
++		addr = ioremap(res.start + ATH11K_QCN6122_AFC_OFFSET, size);
++		if (!addr)
++			return -ENOMEM;
++	}
++	memset_io(addr, 0, size);
++	chunk->paddr = res.start + ATH11K_QCN6122_AFC_OFFSET;
++	chunk->iaddr = addr;
++	chunk->size = size;
++	chunk->type = AFC_MEM_REGION_TYPE;
++	chunk->prev_type = AFC_MEM_REGION_TYPE;
++	chunk->prev_size = size;
++	ath11k_info(ab, "QMI AFC type 10: size=%u assigned within m3-dump at %pa\n",
++		    size, &chunk->paddr);
+ 	return 0;
+ }
+ 
+@@ -2163,9 +2213,20 @@
+ 				idx++;
+ 			}
+ 			break;
++		case AFC_MEM_REGION_TYPE:
++			ret = ath11k_qmi_qcn6122_assign_afc(ab,
++							&ab->qmi.target_mem[idx],
++							ab->qmi.target_mem[i].size);
++			if (!ret)
++				idx++;
++			else
++				ath11k_warn(ab, "qmi AFC request ignored: size=%u error=%d\n",
++					    ab->qmi.target_mem[i].size, ret);
++			break;
+ 		default:
+-			ath11k_warn(ab, "qmi ignore invalid mem req type %d\n",
+-				    ab->qmi.target_mem[i].type);
++			ath11k_warn(ab, "qmi ignore invalid mem req type %d size=%u\n",
++				    ab->qmi.target_mem[i].type,
++				    ab->qmi.target_mem[i].size);
+ 			break;
+ 		}
+ 	}

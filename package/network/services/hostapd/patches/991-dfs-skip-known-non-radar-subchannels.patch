@@ -1,0 +1,20 @@
+From: LYW-30M development <local@localhost>
+Subject: [PATCH] DFS: skip known non-radar subchannels without a failure warning
+
+A 160 MHz CAC notification can cover both non-DFS and DFS subchannels.
+set_dfs_state_freq() already leaves non-radar channels unchanged and returns
+zero, but falls through to the warning intended for an unknown frequency.
+Return zero at the matching non-radar channel instead. Keep the state update,
+return count and warning for genuinely unknown frequencies unchanged.
+
+--- a/src/ap/dfs.c
++++ b/src/ap/dfs.c
+@@ -681,5 +681,8 @@ static int set_dfs_state_freq(struct hostapd_iface *iface, int freq, u32 state)
+ 		chan = &iface->current_mode->channels[i];
+ 		if (chan->freq == freq) {
++			/* A wide channel can include non-DFS subchannels. */
++			if (!(chan->flag & HOSTAPD_CHAN_RADAR))
++				return 0;
+ 			if (chan->flag & HOSTAPD_CHAN_RADAR) {
+ 				chan->flag &= ~HOSTAPD_CHAN_DFS_MASK;
+ 				chan->flag |= state;

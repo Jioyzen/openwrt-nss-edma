@@ -1,0 +1,51 @@
+From: LYW-30M local development <local@localhost>
+Subject: [PATCH] ath11k: report valid RSSI and NSS 12.5 MPDU retry totals
+
+Without peer PPDU samples the driver's RSSI EWMA is zero. Adding the
+noise floor and marking SIGNAL_AVG overrides mac80211's management-frame
+average with a fictitious -95 dBm. Leave the field unfilled in that case
+so mac80211 can provide its own collected average.
+
+NSS 12.5 reports MPDU retry attempts in retry.tx_mpdu_total_retry_count;
+the legacy tx.retries field remains zero under observed load. Feed the
+explicit total to nl80211 TX_RETRIES for that ABI. Keep the legacy mapping
+for older firmware and do not add overlapping counters together.
+This only changes host statistics, not rate control or NSS wire layouts.
+
+--- a/drivers/net/wireless/ath/ath11k/mac.c
++++ b/drivers/net/wireless/ath/ath11k/mac.c
+@@ -10109,11 +10109,14 @@
+ 	}
+ 
+ 	sinfo->signal_avg = ewma_avg_rssi_read(&arsta->avg_rssi);
+-
+-	if (!db2dbm)
+-		sinfo->signal_avg += ATH11K_DEFAULT_NOISE_FLOOR;
+-
+-	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL_AVG);
++	/* NSS may not deliver peer PPDU samples. Do not replace mac80211's
++	 * collected RSSI with an uninitialized EWMA plus the noise floor.
++	 */
++	if (sinfo->signal_avg) {
++		if (!db2dbm)
++			sinfo->signal_avg += ATH11K_DEFAULT_NOISE_FLOOR;
++		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL_AVG);
++	}
+ 
+ 	if (arvif->ar->ab->nss.enabled)
+ 		ath11k_nss_update_sta_stats(arvif, sinfo, sta);
+--- a/drivers/net/wireless/ath/ath11k/nss.c
++++ b/drivers/net/wireless/ath/ath11k/nss.c
+@@ -216,7 +216,12 @@
+ 			pstats->tx.tx_ucast_bytes +
+ 			pstats->tx.tx_bcast_bytes;
+ 		peer->nss.nss_stats->tx_bytes += tx_bytes;
++#ifdef NSS_FIRMWARE_VERSION_12_5
++		peer->nss.nss_stats->tx_retries +=
++			pstats->retry.tx_mpdu_total_retry_count;
++#else
+ 		peer->nss.nss_stats->tx_retries += pstats->tx.retries;
++#endif
+ 
+ 		for (j = 0; j < NSS_WIFILI_TQM_RR_MAX; j++)
+ 			tx_dropped += pstats->tx.dropped.drop_stats[j];

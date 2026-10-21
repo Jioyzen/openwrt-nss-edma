@@ -23,7 +23,7 @@ git clone --branch lyw-30m-nss125-validation --single-branch https://github.com/
 cd openwrt-nss-edma
 ./devices/lyw-30m/prepare-feeds.sh
 python3 devices/lyw-30m/prepare-overlay.py /absolute/path/to/private-bdf-root
-cp configs/lyw-30m-nand22-public.config .config
+cp configs/lyw-30m-nand24.config .config
 make defconfig
 make download -j8
 make -j"$(nproc)"
@@ -31,7 +31,11 @@ make -j"$(nproc)"
 
 `prepare-feeds.sh` 固定 packages、LuCI、NSS 三个提交，核对 SHA 并放入两项本机 NSS 修复；不会使用构建主机上的绝对路径。`source-lock.json` 记录来源和补丁校验值。重复执行允许相同补丁，遇到冲突停止。
 
+镜像应在完整 `make` 成功后验收；单独执行 `target/install` 不能证明软件包已全部编译和安装。将实际候选 SquashFS 解包后，运行 `python3 devices/lyw-30m/verify-rootfs.py /path/to/extracted-root /path/to/device.manifest` 检查必要软件包、无线/NSS 文件、模块内核版本和本机 BDF。此检查通过后仍须验证 FIT、分区策略和实机运行，不能凭镜像大小或 Kconfig 选择认定可用。
+
 选中单设备 LYW-30M profile 后，`make` 自动把版本化的 `devices/lyw-30m/overlay/` 加入镜像，并把其内容计入根文件系统缓存校验。无需手工复制初始配置。`prepare-overlay.py` 仅放入本地 BDF；显式放在 `files/` 的自定义文件仍按 OpenWrt 惯例覆盖默认值。多设备批量 profile 不自动套用这套板级默认文件。
+
+单设备 LYW-30M 的 RAM 与 single profile 同时使用 `devices/lyw-30m/kernel-no-external-io.config`，裁剪本机没有的 MMC/eMMC、USB 支持及纯 USB PHY 驱动。PCIe/USB 共用 UNIPHY、以太网、NAND、校准数据和无线相关支持保留。内核由同一批镜像共享，因此多设备构建不应用此裁剪片段；内核配置改变后，应重新构建并配套安装内核模块。
 
 `private-bdf-root` 只需包含以下两个从本机原厂数据准备的文件，不能拿其他设备的 ART/caldata 替代：
 
@@ -62,6 +66,16 @@ lib/firmware/ath11k/QCN6122/hw1.0/board-2.bin
 已安装基线完成双频、四口映射、NSS Wi-Fi 桥接、NAND 启动及升级验证；用户报告近距离 5GHz 吞吐接近千兆。8MiB NSS 预留曾出现吞吐回退，因此当前保留 16MiB。长期稳定性、远距离吞吐和每次源码更新后的负载表现仍需分别验证；不承诺零警告或所有标准路由功能均已完成独立压测。
 
 本分支包含本机 DTS、网络/caldata、单系统升级检查、温度读取、内存 profile、ath11k 与 NSS DMA/缓冲修复。NSS feed 的两项本地补丁随系统仓库保存，避免要求第三个维护仓库。上游升级应先固定新 SHA，再检查补丁适用性，完成 RAM 启动和同条件负载对照后发布。
+
+## NAND24 / RAM34 维护更新
+
+`configs/lyw-30m-nand24.config` 是当前维护构建配置，保留标准路由、防火墙、PPPoE、IPv6、Argon/简体中文及只读 NSS 状态页。移除 ip-full/libbpf/libelf 的依赖，使用已验证的 ip-tiny；NSS 状态页无需额外常驻服务。`prepare-feeds.sh` 按锁定清单同步 NSS driver/clients 补丁。
+
+本轮纳入此前本地验证的 RSSI/重试/64位流量统计、AFC请求和统计消息边界检查、RCU和DFS检查等修正；不宣称它们解决高负载 RX 计数或 CE/HTT 缓冲生命周期问题。5GHz QCN6122 NSS 软件 RX 描述符在板级 `etc/modules.conf` 中请求2048，与用户确认吞吐正常的RAM34保持一致；这是固件初始化ACK确认的请求值，非实时池占用读回。
+
+单设备内核裁剪 MMC/SDHCI 和纯 USB PHY 后，RAM34 `MemTotal` 增加256KiB；不是释放NSS或无线保留内存。用户确认RAM34吞吐正常。人工重复触发无线固件故障时仍存在 `skb` 释放崩溃，长期稳定性及完整路由压测没有因此完成。RAM33三份未通过重复恢复验收的候选不纳入本版本。
+
+发布镜像使用上述版本化默认参数；设备升级时可通过经过核对的配置备份保留当前地址、无线及密钥。个人配置和原厂BDF/ART不提交仓库。
 
 ## NAND23 首次安装验收
 

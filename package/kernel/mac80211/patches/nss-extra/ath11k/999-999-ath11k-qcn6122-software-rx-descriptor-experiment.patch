@@ -1,0 +1,98 @@
+From: LYW-30M local development <local@localhost>
+Subject: [PATCH] ath11k: add a bounded QCN6122 NSS software RX descriptor experiment
+
+Default zero preserves the upstream allocation request. Allow an independent,
+boot-only 256M QCN6122 software-descriptor budget so burst allocation failures
+can be tested without resizing RXDMA data rings or host packet-buffer pools.
+Only record the request after an init ACK; this is not firmware readback.
+Other hardware and memory profiles keep their existing budgets.
+
+--- a/drivers/net/wireless/ath/ath11k/nss.c
++++ b/drivers/net/wireless/ath/ath11k/nss.c
+@@ -3,6 +3,8 @@
+  * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+  */
+ #include <linux/of.h>
++#include <linux/moduleparam.h>
++#include <linux/kstrtox.h>
+ 
+ #include "ahb.h"
+ #include "debug.h"
+@@ -15,6 +17,33 @@
+ #include "hif.h"
+ #include "wmi.h"
+ #include "../../../../../net/mac80211/sta_info.h"
++
++/* Boot-only experiment: independent of RXDMA data-ring/buffer sizing.
++ * Zero preserves the upstream budget. Only 256M QCN6122 uses the override.
++ */
++static unsigned int nss_qcn6122_rx_desc;
++
++static int ath11k_nss_rx_desc_set(const char *value, const struct kernel_param *kp)
++{
++	unsigned int count;
++	int ret = kstrtouint(value, 0, &count);
++
++	if (ret)
++		return ret;
++	if (count && count != 1536 && count != 2048 && count != 3072)
++		return -EINVAL;
++	*(unsigned int *)kp->arg = count;
++	return 0;
++}
++
++static const struct kernel_param_ops ath11k_nss_rx_desc_ops = {
++	.set = ath11k_nss_rx_desc_set,
++	.get = param_get_uint,
++};
++module_param_cb(nss_qcn6122_rx_desc, &ath11k_nss_rx_desc_ops,
++		&nss_qcn6122_rx_desc, 0444);
++MODULE_PARM_DESC(nss_qcn6122_rx_desc,
++		"256M QCN6122 NSS software RX descriptors (0=upstream, 1536/2048/3072; reload required)");
+ 
+ /*-----------------------------ATH11K-NSS Helpers--------------------------*/
+ 
+@@ -3280,6 +3309,9 @@
+ 	pdevmsg->lmac_id = ar->lmac_id;
+ 	pdevmsg->target_pdev_id = ar->pdev->pdev_id;
+ 	pdevmsg->num_rx_swdesc = WIFILI_RX_DESC_POOL_WEIGHT * DP_RXDMA_BUF_RING_SIZE;
++	if (ath11k_nss_256m_enabled(ab) &&
++	    ab->hw_rev == ATH11K_HW_QCN6122_HW10 && nss_qcn6122_rx_desc)
++		pdevmsg->num_rx_swdesc = nss_qcn6122_rx_desc;
+ 	pdevmsg->scheme_id = scheme_id;
+ 
+ 	/* Store rxdma ring info to the message */
+@@ -3320,6 +3352,9 @@
+ 		goto free;
+ 	}
+ 
++	ar->nss.rx_swdesc_requested = pdevmsg->num_rx_swdesc;
++	ath11k_info(ab, "NSS pdev %d RX software descriptors requested=%u (init ACK)\n",
++		    radio_id, ar->nss.rx_swdesc_requested);
+ 	kfree(wlmsg);
+ 
+ 	/* Disable nss sojourn stats by default */
+--- a/drivers/net/wireless/ath/ath11k/nss.h
++++ b/drivers/net/wireless/ath/ath11k/nss.h
+@@ -219,6 +219,8 @@
+ 	int if_num;
+ 	/* Radio/pdev Context obtained on pdev register */
+ 	void* ctx;
++	/* Last init request acknowledged by firmware, not a live pool gauge. */
++	u32 rx_swdesc_requested;
+ };
+ 
+ /* Structure to hold the soc related info for nss offload support */
+--- a/drivers/net/wireless/ath/ath11k/debugfs.c
++++ b/drivers/net/wireless/ath/ath11k/debugfs.c
+@@ -840,6 +840,10 @@
+ 		ar = ab->pdevs[i].ar;
+ 		if (!ar || ar->state != ATH11K_STATE_ON)
+ 			continue;
++#ifdef CPTCFG_ATH11K_NSS_SUPPORT
++		seq_printf(s, "radio%d_nss_rx_swdesc_requested=%u\n", i,
++			   ar->nss.rx_swdesc_requested);
++#endif
+ 		snprintf(name, sizeof(name), "radio%d_rx_data", i);
+ 		ath11k_debugfs_rx_inventory(s, name, ab, &ar->dp.rx_refill_buf_ring);
+ 		snprintf(name, sizeof(name), "radio%d_rx_monitor", i);
