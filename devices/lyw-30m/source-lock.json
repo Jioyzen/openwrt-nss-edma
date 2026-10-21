@@ -8,7 +8,7 @@
     "upstream": "https://github.com/kuncy7/openwrt-nss-edma.git",
     "upstream_branch": "c3po-tag-8021q",
     "base_commit": "33ff647739f1f556556a0340afc3438dc85afc38",
-    "installed_image_commit": "de171c1671debb1eec7356944013fdb14d78b4a2"
+    "installed_image_commit": "b93d34a206b4054ec2cd715bae7ff231f79c9dd2"
   },
   "feeds": {
     "packages": {
@@ -44,8 +44,8 @@
   "installed_image_manifest": "builds/nand24.json",
   "local_development": {
     "baseline": "RAM34",
-    "candidate": "NAND24 from user-throughput-validated RAM34",
-    "NAND_untouched": true,
+    "candidate": "NAND24 installed from validated RAM34",
+    "NAND_untouched": false,
     "upstream_fixes": [
       "51680ad76994b884aa9d64e92f4cf7c50a91d7b5",
       "833cbdeb45d02d4b9a435c7d18f91be01d47b22a",
@@ -54,7 +54,7 @@
       "9dd62f962a0fc97282906adb0b40673b036fbb3a",
       "5344fc35d79fc947b501e9feee5ced2b07c664fa"
     ],
-    "not_yet_validated": true,
+    "not_yet_validated": false,
     "parent": "NAND23",
     "source_default_rx_desc_override": 2048,
     "private_RAM_image_QCN6122_rx_desc_override": 2048,
@@ -82,6 +82,7 @@
     "RAM33_deferred_not_applied": true,
     "hardware_trim_fragment": "devices/lyw-30m/kernel-no-external-io.config",
     "hardware_trim_single_LYW_profile_only": true,
-    "RAM34_owner_throughput_normal": true
+    "RAM34_owner_throughput_normal": true,
+    "validation_scope": "RAM34 owner throughput, NAND24 readback/protected15/config/dual AP/NSS and automatic software reboot passed; recovery fault injection and long-term/load checks remain limited"
   }
 }

@@ -6,7 +6,7 @@
 
 - 开发上游：[kuncy7/openwrt-nss-edma](https://github.com/kuncy7/openwrt-nss-edma/tree/c3po-tag-8021q)，分支 `c3po-tag-8021q`。
 - 固定上游基线：`33ff647739f1f556556a0340afc3438dc85afc38`。
-- 当前已安装 NAND23 源码提交：`de171c1671debb1eec7356944013fdb14d78b4a2`；镜像SHA和实机验收见 `devices/lyw-30m/builds/nand23-source-defaults.json`。
+- 当前已安装 NAND24 源码提交：`b93d34a206b4054ec2cd715bae7ff231f79c9dd2`；镜像SHA和实机验收见 `devices/lyw-30m/builds/nand24.json`。NAND23仍保留作恢复基线。
 - NAND22回退基线提交：`c1b1c67a80ebb4350565f3e3f3c00a94f6683671`，继续保留。
 - Linux 6.18.55，NSS Firmware 12.5-210-MP，NSS LOW / ath11k 256M profile，16MiB NSS reserved-memory。
 - 软件包和 LuCI 来自锁定的 ImmortalWrt feeds；系统核心是 OpenWrt NSS，不能称为完整 ImmortalWrt master。
@@ -29,7 +29,7 @@ make download -j8
 make -j"$(nproc)"
 ```
 
-`prepare-feeds.sh` 固定 packages、LuCI、NSS 三个提交，核对 SHA 并放入两项本机 NSS 修复；不会使用构建主机上的绝对路径。`source-lock.json` 记录来源和补丁校验值。重复执行允许相同补丁，遇到冲突停止。
+`prepare-feeds.sh` 固定 packages、LuCI、NSS 三个提交，核对 SHA 并放入五项本机 NSS driver/clients 修复；不会使用构建主机上的绝对路径。`source-lock.json` 记录来源和补丁校验值。重复执行允许相同补丁，遇到冲突停止。
 
 镜像应在完整 `make` 成功后验收；单独执行 `target/install` 不能证明软件包已全部编译和安装。将实际候选 SquashFS 解包后，运行 `python3 devices/lyw-30m/verify-rootfs.py /path/to/extracted-root /path/to/device.manifest` 检查必要软件包、无线/NSS 文件、模块内核版本和本机 BDF。此检查通过后仍须验证 FIT、分区策略和实机运行，不能凭镜像大小或 Kconfig 选择认定可用。
 
@@ -46,11 +46,11 @@ lib/firmware/ath11k/QCN6122/hw1.0/board-2.bin
 
 板载 5GHz 芯片曾标识为 QCN6102；当前已验证驱动使用 QCN6122 固件目录。ART 校准数据由板级 hotplug 从本机 `0:ART` 提取。仓库不分发 BDF、ART、MAC、密码哈希、SSH 密钥和个人网络配置。
 
-完整公开配置保留 NAND22 的功能选择，并移除本机外置工具链路径，改用源码内工具链。`configs/lyw-30m-nss125-router.config` 是精简功能片段。公开 overlay 提供简体中文、Argon、上海时区、国内 NTP、NSS 模式和 LED 通知脚本；LED 只观察链路/路由通知，不发送探测包，不能据此证明公网真正可达。HTTP 默认 80，初始账户 `root` / `password`，LAN 地址为 `192.168.2.1/24`，LAN1/2/3 和 Wi-Fi 桥接并提供 DHCP，WAN 为 DHCP、WAN6 为 DHCPv6。SSH 仅在 LAN 提供密码登录，主机密钥首次启动生成。
+完整公开 NAND24 配置保留标准路由功能和已验证的精简项，并移除本机外置工具链路径，改用源码内工具链。`configs/lyw-30m-nss125-router.config` 是精简功能片段。公开 overlay 提供简体中文、Argon、上海时区、国内 NTP、NSS 模式和 LED 通知脚本；LED 只观察链路/路由通知，不发送探测包，不能据此证明公网真正可达。HTTP 默认 80，初始账户 `root` / `password`，LAN 地址为 `192.168.2.1/24`，LAN1/2/3 和 Wi-Fi 桥接并提供 DHCP，WAN 为 DHCP、WAN6 为 DHCPv6。SSH 仅在 LAN 提供密码登录，主机密钥首次启动生成。
 
 公开初始 Wi-Fi：2.4GHz `LYW-2.4G`、5GHz `LYW-5G`，均开放不加密，国家 CN、信道 auto、不指定 txpower。频宽采用上游 Wi-Fi 6 初始值 HE20 / HE80；OpenWrt 没有通用的 `htmode=auto`。保留每频段最多 32 个客户端的低内存设备预算。新默认值不复制旧 NAND22 的 AP 地址、上级网关、无线密码或固定射频参数；保留配置升级仍以用户备份为准。
 
-这是一套可移植的构建输入，不是 NAND22 的逐字节重建承诺：原镜像还使用了私有网络覆盖配置、外置 GCC 14.3.0 工具链及本机签名材料。已在独立目录验证锁定 feeds 的获取、两项补丁校验、overlay 重复生成和 `make defconfig`；展开后启用的软件包清单没有增减。NAND23已用版本化默认配置完成整镜像构建、原厂Web开SSH、专用U-Boot Web刷写和实机启动验收；安装二进制仍使用构建主机既有工具链，未承诺公开配置切换源码内工具链后的逐字节一致性。请勿将持续变化的公共 snapshot 内核模块直接混装到此固定版本；应从同一源码和配置构建所需模块。
+这是一套可移植的构建输入，不是 NAND22 的逐字节重建承诺：原镜像还使用了私有网络覆盖配置、外置 GCC 14.3.0 工具链及本机签名材料。已在独立目录验证锁定 feeds 的获取、锁定补丁校验、overlay 重复生成和 `make defconfig`；展开后启用的软件包清单没有增减。NAND23已用版本化默认配置完成整镜像构建、原厂Web开SSH、专用U-Boot Web刷写和实机启动验收；安装二进制仍使用构建主机既有工具链，未承诺公开配置切换源码内工具链后的逐字节一致性。请勿将持续变化的公共 snapshot 内核模块直接混装到此固定版本；应从同一源码和配置构建所需模块。
 
 ## 镜像与布局
 
@@ -65,7 +65,7 @@ lib/firmware/ath11k/QCN6122/hw1.0/board-2.bin
 
 已安装基线完成双频、四口映射、NSS Wi-Fi 桥接、NAND 启动及升级验证；用户报告近距离 5GHz 吞吐接近千兆。8MiB NSS 预留曾出现吞吐回退，因此当前保留 16MiB。长期稳定性、远距离吞吐和每次源码更新后的负载表现仍需分别验证；不承诺零警告或所有标准路由功能均已完成独立压测。
 
-本分支包含本机 DTS、网络/caldata、单系统升级检查、温度读取、内存 profile、ath11k 与 NSS DMA/缓冲修复。NSS feed 的两项本地补丁随系统仓库保存，避免要求第三个维护仓库。上游升级应先固定新 SHA，再检查补丁适用性，完成 RAM 启动和同条件负载对照后发布。
+本分支包含本机 DTS、网络/caldata、单系统升级检查、温度读取、内存 profile、ath11k 与 NSS DMA/缓冲修复。NSS feed 的五项本地补丁随系统仓库保存，避免要求第三个维护仓库。上游升级应先固定新 SHA，再检查补丁适用性，完成 RAM 启动和同条件负载对照后发布。
 
 ## NAND24 / RAM34 维护更新
 
@@ -76,6 +76,8 @@ lib/firmware/ath11k/QCN6122/hw1.0/board-2.bin
 单设备内核裁剪 MMC/SDHCI 和纯 USB PHY 后，RAM34 `MemTotal` 增加256KiB；不是释放NSS或无线保留内存。用户确认RAM34吞吐正常。人工重复触发无线固件故障时仍存在 `skb` 释放崩溃，长期稳定性及完整路由压测没有因此完成。RAM33三份未通过重复恢复验收的候选不纳入本版本。
 
 发布镜像使用上述版本化默认参数；设备升级时可通过经过核对的配置备份保留当前地址、无线及密钥。个人配置和原厂BDF/ART不提交仓库。
+
+NAND24已通过原生sysupgrade写入并完成自动重启验证，kernel/rootfs读回一致、15个保护分区未变、双频NSS/HTTP80及配置保留正常。重启后MemAvailable快照约43.5MiB，不代表无线负载最低值。[NAND24验收记录](devices/lyw-30m/docs/nand24-validation.zh-CN.md)列出具体范围及未解决问题。
 
 ## NAND23 首次安装验收
 

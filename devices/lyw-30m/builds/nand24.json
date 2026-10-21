@@ -1,0 +1,86 @@
+{
+  "label": "NAND24",
+  "source_commit": "b93d34a206b4054ec2cd715bae7ff231f79c9dd2",
+  "validated_RAM_baseline": "RAM34",
+  "owner_RAM34_throughput": "Normal, confirmed by owner; no exact rate supplied for this round",
+  "kernel": "6.18.55",
+  "nss_firmware": "12.5-210-MP.R",
+  "nss_reserved_mib": 16,
+  "verification_date": "2026-10-21",
+  "device_written": true,
+  "installation_method": "Native sysupgrade from NAND23, preserving reviewed RAM34 settings",
+  "artifacts": {
+    "lyw-nss618-nand24-squashfs-factory.ubi": {
+      "bytes": 14024704,
+      "sha256": "45e0ec58bd48176eacc4cc2cf1be83649feb4fdc2873745e9610557b7f950594"
+    },
+    "lyw-nss618-nand24-squashfs-sysupgrade.bin": {
+      "bytes": 13107838,
+      "sha256": "005b05f6e5434bce739012fc2f9b51aec4ee6c08ce4ae70584508928900b4463"
+    }
+  },
+  "offline_checks": {
+    "FIT_UBI_geometry_capacity_verified": true,
+    "source_defaults_match": true,
+    "private_SSH_keys_absent": true,
+    "all66_modules_startup_scripts_match_RAM34": true,
+    "patch_replay_to_pinned_sources_passed": true,
+    "rootfs_package_audit_passed": true,
+    "installed_packages": 163
+  },
+  "storage": {
+    "layout": "single-ubi-v1",
+    "UBI_offset": 9437184,
+    "UBI_bytes": 124780544,
+    "LEB_bytes": 126976,
+    "volume_LEBs": {
+      "kernel": 32,
+      "rootfs": 73,
+      "rootfs_data": 821,
+      "provisioning": 2
+    },
+    "overlay_available_kib_snapshot": 87272,
+    "protected15_unchanged": true,
+    "U_Boot_environment_unchanged": true,
+    "ECC_failures": 0,
+    "ECC_corrected_bits": 0,
+    "bad_PEBs": 0
+  },
+  "installed_payloads": {
+    "kernel_bytes": 3948360,
+    "kernel_sha256": "93931e8f68386efe9f356283733acb7953a5a80d9a5ee7b6c3dce8f840a74d41",
+    "root_sysupgrade_bytes": 9146368,
+    "root_sysupgrade_sha256": "57777a1615deb0cedf1b6ea7178c88baf63824431257d6e0b08dc73bd726c6ff"
+  },
+  "runtime": {
+    "NAND_root_verified": true,
+    "dual_AP_NSS_enabled": true,
+    "HTTP80": 200,
+    "temperature_readable": true,
+    "RAM34_settings_preserved": true,
+    "rootfs_only_writable": true,
+    "OOM_events": 0,
+    "WARN_oops_panic_allocation_failure": false,
+    "software_reboot_persistence_verified": true,
+    "first_boot_memory_kib_snapshot": {
+      "MemTotal": 167548,
+      "MemAvailable": 42140,
+      "Shmem": 288,
+      "Slab": 40912,
+      "SUnreclaim": 33760
+    },
+    "after_reboot_memory_kib_snapshot": {
+      "MemTotal": 167548,
+      "MemAvailable": 44508,
+      "Shmem": 260,
+      "Slab": 39944,
+      "SUnreclaim": 33428
+    }
+  },
+  "known_limits": [
+    "High-load NSS RX descriptor allocation counter issue is not proven fixed.",
+    "Repeated forced firmware crash CE/HTT/skb recovery remains unresolved; rejected RAM33 patches are excluded.",
+    "PSCI PC mode -1 and init/overlay UUID compatibility messages remain.",
+    "No new throughput measurement after NAND installation, 24h soak, physical power-cycle or complete WAN/NAT/PPPoE load acceptance."
+  ]
+}
