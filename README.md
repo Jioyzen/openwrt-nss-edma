@@ -120,18 +120,46 @@ rm -rf /tmp/lyw-unlock
 
 root 密码仍为 `password`，后续刷写步骤继续使用这个密码。
 
-## 5. 安装专用 U-Boot
+## 5. 备份原机分区
 
-从 U-Boot Release 下载 `lyw-30m-uboot-web-20261020-appsbl-0x140000.bin`。先在电脑上核对 SHA256：
+在 Windows 搜索并打开 **命令提示符（cmd.exe）**，不要在 Telnet 窗口或 PowerShell 中执行。先保存分区表，再把 16 个 MTD 分区分别导出为文件：
 
-```powershell
-Get-FileHash .\lyw-30m-uboot-web-20261020-appsbl-0x140000.bin -Algorithm SHA256
+```cmd
+mkdir lyw30m-backup
+```
+
+```cmd
+cd lyw30m-backup
+```
+
+```cmd
+ssh -o HostKeyAlgorithms=+ssh-rsa root@192.168.10.1 "cat /proc/mtd" > proc-mtd.txt
+```
+
+```cmd
+for /L %i in (0,1,15) do @ssh -o HostKeyAlgorithms=+ssh-rsa root@192.168.10.1 "cat /dev/mtd%i" > mtd%i.bin
+```
+
+每个分区会单独询问一次 root 密码，输入 `password`。完成后检查文件：
+
+```cmd
+dir mtd*.bin
+```
+
+应看到 `mtd0.bin` 至 `mtd15.bin` 共 16 个文件；文件大小应与 `proc-mtd.txt` 中对应分区的容量相符。
+
+## 6. 安装专用 U-Boot
+
+把 U-Boot Release 中的 `lyw-30m-uboot-web-20261020-appsbl-0x140000.bin` 下载到 `lyw30m-backup` 文件夹，在当前命令提示符中核对 SHA256：
+
+```cmd
+certutil -hashfile lyw-30m-uboot-web-20261020-appsbl-0x140000.bin SHA256
 ```
 
 结果应为 `5080d91cb41dace19781053b72a1b0978cf97a77f397cbb3c56af2ccd1e85d87`。然后从电脑上传镜像：
 
-```powershell
-scp .\lyw-30m-uboot-web-20261020-appsbl-0x140000.bin root@192.168.10.1:/tmp/lyw-uboot.bin
+```cmd
+ssh -o HostKeyAlgorithms=+ssh-rsa root@192.168.10.1 "cat > /tmp/lyw-uboot.bin" < lyw-30m-uboot-web-20261020-appsbl-0x140000.bin
 ```
 
 回到 root SSH 窗口，确认设备主引导分区：
@@ -182,7 +210,7 @@ fw_setenv failsafe 1
 reboot
 ```
 
-## 6. 从 U-Boot 恢复网页刷入 OpenWrt
+## 7. 从 U-Boot 恢复网页刷入 OpenWrt
 
 电脑网线仍接 LAN3，将电脑网卡临时设为静态地址 `192.168.1.2`、掩码 `255.255.255.0`，网关留空。浏览器打开：
 
@@ -190,10 +218,10 @@ reboot
 
 在“固件更新”页面上传 NAND24 Release 中的 **`lyw-nss618-nand24-squashfs-factory.ubi`**，等待检查完成后开始刷写。刷写期间不要断电。`sysupgrade.bin` 不是首次安装文件，也不要上传 U-Boot 镜像。
 
-下载后可在 PowerShell 核对 factory 文件：
+下载后可在 Windows 命令提示符核对 factory 文件：
 
-```powershell
-Get-FileHash .\lyw-nss618-nand24-squashfs-factory.ubi -Algorithm SHA256
+```cmd
+certutil -hashfile lyw-nss618-nand24-squashfs-factory.ubi SHA256
 ```
 
 结果应为 `45e0ec58bd48176eacc4cc2cf1be83649feb4fdc2873745e9610557b7f950594`。
