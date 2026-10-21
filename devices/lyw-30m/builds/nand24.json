@@ -82,5 +82,11 @@
     "Repeated forced firmware crash CE/HTT/skb recovery remains unresolved; rejected RAM33 patches are excluded.",
     "PSCI PC mode -1 and init/overlay UUID compatibility messages remain.",
     "No new throughput measurement after NAND installation, 24h soak, physical power-cycle or complete WAN/NAT/PPPoE load acceptance."
-  ]
+  ],
+  "recovery_factory_compatibility": {
+    "uboot_release": "lyw-30m-web-20261020",
+    "validator": "Actual U-Boot validator and bundled read-only libfdt sources",
+    "host_cases_passed": 9,
+    "new_NAND24_Web_flash_performed": false
+  }
 }
